@@ -1,0 +1,83 @@
+# portfolio_data.example.json
+# ─────────────────────────────────────────────────────────────────────────────
+# Copy this file to portfolio_data.json and fill in your own values.
+# All monetary values are in THB unless stated otherwise.
+# ─────────────────────────────────────────────────────────────────────────────
+{
+  "brokers": {
+    "dashboard_title": "My Investment Portfolio",
+    "funds_name": "กองทุนรวม (Mutual Funds)",
+    "stocks_name": "หุ้น & ETF ต่างประเทศ",
+    "local_mf_name": "กองทุนรวมในประเทศ"
+  },
+  "investor_profile": {
+    "name": "Your Name",
+    "age": 26,
+    "income": 16000,
+    "expense": 12000,
+    "goal": "ออมเงินระยะยาว 5 ปี เพื่อซื้อบ้านและสร้างความมั่งคั่ง"
+  },
+  "cash": {
+    "now": 13000,
+    "target": 72000
+  },
+  "wealthx_funds": [
+    {
+      "t": "FUNDS-001",
+      "name": "ชื่อกองทุน WealthX ของคุณ",
+      "theme": "Global Equity",
+      "units": 1000.0,
+      "cost": 10.0000,
+      "nav": 10.5000,
+      "note": "DCA ทุกเดือน"
+    }
+  ],
+  "dime_assets": [
+    {
+      "t": "AAPL",
+      "shares": 1.0,
+      "cost": 150.00,
+      "cost_thb": 5250,
+      "price": 185.00,
+      "currency": "USD",
+      "type": "stock"
+    }
+  ],
+  "ideas": [
+    {
+      "t": "MSFT",
+      "name": "Microsoft",
+      "theme": "Cloud / AI Platform",
+      "entry": "$390–420",
+      "entryLow": 390,
+      "entryHigh": 420,
+      "dca": "฿5,000",
+      "priority": "high"
+    }
+  ],
+  "trim_rules": [
+    {
+      "ticker": "AAPL",
+      "pct": "+80%",
+      "rule": "ถ้ากำไรเกิน 80% ขาย 25% เพื่อ lock profit",
+      "urgency": "watch"
+    }
+  ],
+  "review_rules": [
+    {
+      "ticker": "AAPL",
+      "loss": "-20",
+      "rule": "ถ้าขาดทุนเกิน -20% จากทุน ทบทวนปัจจัยพื้นฐานก่อนตัดสินใจ",
+      "urgency": "watch"
+    }
+  ],
+  "yt_channels": [
+    {
+      "name": "ช่อง YouTube ที่ติดตาม",
+      "handle": "@YourYouTubeChannel",
+      "emoji": "📊",
+      "color": "#6366f1"
+    }
+  ],
+  "news_sources": []
+}

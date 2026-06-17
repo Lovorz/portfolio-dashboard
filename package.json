@@ -1,0 +1,19 @@
+{
+  "name": "personal-stock-portfolio",
+  "version": "1.0.0",
+  "description": "Personal Stock Portfolio Dashboard & Gmail PDF OCR Workflow",
+  "main": "portfolio.html",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "portfolio",
+    "stock",
+    "dashboard",
+    "ocr",
+    "mistral",
+    "gmail"
+  ],
+  "author": "",
+  "license": "MIT"
+}

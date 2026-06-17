@@ -1,0 +1,48 @@
+# ─── Secrets & credentials ─────────────────────────────────────────────────
+.env
+token.json
+client_secret_*.json
+
+# ─── Personal portfolio data (DO NOT share publicly) ────────────────────────
+portfolio_data.json
+transactions.json
+transactions.json.bk
+portfolio_data.json.bk
+tax_report.json
+tax_report.md
+tax_report_*.csv
+earthh_evans_principles.json
+
+# ─── Obsidian vault: allow core playbooks, block personal custom cards ────────
+# Block personal custom-added clip cards (Facebook posts, personal notes)
+Investment_guidelines/Facebook\ Posts/
+Investment_guidelines/Custom/
+Investment_guidelines/Watchlist\ Analysis/
+Investment_guidelines/Custom\ Notes/
+
+# Block Obsidian app settings (device-specific, not portable)
+Investment_guidelines/.obsidian/
+
+# The rest of Investment_guidelines/ (Allocation, Risk, Basics, etc.)
+# is generated from shared docs and is safe to push
+
+# ─── Uploaded documents (PDFs, Word files, personal images) ─────────────────
+documents/
+*.pdf
+*.docx
+*.xlsx
+*.jpeg
+*.jpg
+*.png
+
+# ─── Python cache ────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+
+# ─── Node ────────────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── OS junk ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
