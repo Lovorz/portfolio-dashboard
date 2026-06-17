@@ -2410,8 +2410,45 @@
       }, 1000);
     }
 
+    // Fetch real-time USD/THB exchange rate from dedicated, CORS-enabled APIs
+    async function fetchExchangeRate() {
+      // List of endpoints to try in order
+      const endpoints = [
+        // 1. Local backend proxy if available
+        '/api/fx_rate',
+        'http://localhost:8080/api/fx_rate',
+        // 2. Open Exchange Rates API (direct public CORS-enabled, no key needed)
+        'https://open.er-api.com/v6/latest/USD',
+        // 3. ExchangeRate-API (direct public CORS-enabled fallback)
+        'https://api.exchangerate-api.com/v4/latest/USD'
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) continue;
+          const json = await response.json();
+          let rate = null;
+          if (json && json.rates && json.rates.THB) {
+            rate = Number(json.rates.THB);
+          }
+          if (rate && rate > 0) {
+            exchangeRate = Number(rate.toFixed(2));
+            console.log(`✓ USD/THB exchange rate loaded via ${url}:`, exchangeRate);
+            return true;
+          }
+        } catch (e) {
+          // Silent fallback to next endpoint
+        }
+      }
+      return false;
+    }
+
     // Fetch Live prices from Yahoo Finance API via CORS proxies
     async function fetchLivePrices() {
+      // 1. Update USD/THB exchange rate in real-time
+      await fetchExchangeRate();
+
       const tickers = new Set();
       if (portfolioData.dime_assets) {
         portfolioData.dime_assets.forEach(a => tickers.add(a.t));
@@ -2419,26 +2456,49 @@
       if (portfolioData.ideas) {
         portfolioData.ideas.forEach(id => tickers.add(id.t));
       }
-      tickers.add("THBUSD=X"); // Add exchange rate quote
+      tickers.add("THBUSD=X"); // Add exchange rate quote as a fallback
 
       const tickerList = Array.from(tickers).join(',');
-      const queryUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickerList}`;
       
       let data = null;
-      try {
-        console.log(`Fetching live quotes for: ${tickerList} via corsproxy.io`);
-        const response = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(queryUrl)}`);
-        if (!response.ok) throw new Error("CORS Proxy failed");
-        data = await response.json();
-      } catch (err) {
-        console.warn("corsproxy.io failed, attempting allorigins.win...", err);
+
+      // Try local backend proxy first (fast, bypasses browser CORS block entirely)
+      const localProxyUrls = [
+        `/api/yahoo_finance?symbols=${tickerList}`,
+        `http://localhost:8080/api/yahoo_finance?symbols=${tickerList}`
+      ];
+      
+      for (const url of localProxyUrls) {
         try {
-          const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(queryUrl)}`);
-          if (!response.ok) throw new Error("Allorigins failed");
-          const wrapper = await response.json();
-          data = JSON.parse(wrapper.contents);
-        } catch (err2) {
-          console.error("All proxies failed. Using snapshot data.", err2);
+          const response = await fetch(url);
+          if (response.ok) {
+            data = await response.json();
+            console.log(`✓ Live stock quotes loaded via local backend proxy: ${url}`);
+            break;
+          }
+        } catch (err) {
+          // Try next proxy
+        }
+      }
+
+      // If local backend proxy fails or isn't available, fall back to browser-side CORS proxies
+      if (!data) {
+        const queryUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickerList}`;
+        try {
+          console.log(`Fetching live quotes for: ${tickerList} via corsproxy.io`);
+          const response = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(queryUrl)}`);
+          if (!response.ok) throw new Error("CORS Proxy failed");
+          data = await response.json();
+        } catch (err) {
+          console.warn("corsproxy.io failed, attempting allorigins.win...", err);
+          try {
+            const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(queryUrl)}`);
+            if (!response.ok) throw new Error("Allorigins failed");
+            const wrapper = await response.json();
+            data = JSON.parse(wrapper.contents);
+          } catch (err2) {
+            console.error("All proxies failed. Using snapshot data.", err2);
+          }
         }
       }
 
@@ -2447,7 +2507,12 @@
         results.forEach(quote => {
           if (quote.symbol === "THBUSD=X") {
             if (quote.regularMarketPrice > 0) {
-              exchangeRate = Number((1 / quote.regularMarketPrice).toFixed(2));
+              const parsedYahooFx = Number((1 / quote.regularMarketPrice).toFixed(2));
+              console.log("Yahoo Finance FX Rate:", parsedYahooFx);
+              // Only override if the dedicated exchange rate API failed (e.g. rate is default)
+              if (exchangeRate === 35.00) {
+                exchangeRate = parsedYahooFx;
+              }
             }
           } else {
             livePrices[quote.symbol] = quote.regularMarketPrice;

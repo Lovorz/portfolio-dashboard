@@ -3,11 +3,32 @@ import sys
 import json
 import base64
 import subprocess
+import urllib.request
+from urllib.parse import urlparse, parse_qs
 from http.server import SimpleHTTPRequestHandler, HTTPServer
+from concurrent.futures import ThreadPoolExecutor
 
 PORT = 8080
 DOCUMENTS_DIR = "documents"
 OBSIDIAN_DIR = "Investment_guidelines"
+
+def fetch_single_quote(symbol):
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+    try:
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            meta = data['chart']['result'][0]['meta']
+            return {
+                "symbol": meta.get('symbol', symbol),
+                "regularMarketPrice": meta.get('regularMarketPrice', 0)
+            }
+    except Exception as e:
+        print(f"Error fetching chart for {symbol}: {e}")
+        return None
 
 class CustomHTTPRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -24,6 +45,63 @@ class CustomHTTPRequestHandler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200, "OK")
         self.end_headers()
+
+    def do_GET(self):
+        parsed_url = urlparse(self.path)
+        if parsed_url.path == '/api/yahoo_finance':
+            query_params = parse_qs(parsed_url.query)
+            symbols_str = query_params.get('symbols', [''])[0]
+            if not symbols_str:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Missing symbols parameter"}).encode('utf-8'))
+                return
+            
+            symbols = [s.strip() for s in symbols_str.split(',') if s.strip()]
+            
+            results = []
+            # Fetch concurrently using ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = executor.map(fetch_single_quote, symbols)
+                for res in futures:
+                    if res is not None:
+                        results.append(res)
+            
+            response_data = {
+                "quoteResponse": {
+                    "result": results
+                }
+            }
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(response_data).encode('utf-8'))
+            return
+
+        elif parsed_url.path == '/api/fx_rate':
+            query_url = "https://open.er-api.com/v6/latest/USD"
+            try:
+                req = urllib.request.Request(
+                    query_url, 
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    content = response.read()
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(content)
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            return
+
+        # Fallback to SimpleHTTPRequestHandler to serve local files
+        super().do_GET()
 
     def do_POST(self):
         if self.path == '/api/sync_note':
