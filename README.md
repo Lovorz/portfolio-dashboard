@@ -16,14 +16,19 @@
 |--------|-----------|
 | 📈 **Live Prices** | ราคาหุ้น US จาก Yahoo Finance แบบ Real-time |
 | 💱 **USD/THB** | แสดงมูลค่าทั้ง USD และ THB พร้อมกัน |
-| 🤖 **AI Risk Advisor** | แชตกับ AI (Claude/Gemini) วิเคราะห์พอร์ตส่วนตัว |
-| 📚 **Obsidian Vault** | คลังความรู้การลงทุนส่วนตัว เชื่อมกับ AI Context |
+| 🤖 **AI Risk Advisor** | แชตกับ AI (Claude/Gemini/Claude CLI) วิเคราะห์พอร์ตส่วนตัว |
+| 🐱 **RichieGem Watchlist Report** | วิเคราะห์ข่าวหุ้นทุกตัวใน Watchlist แบบ batch สไตล์ Meme/Guru เลือก Engine ได้ (Claude CLI / Gemma) |
+| 📰 **Stock News Intelligence** | วิเคราะห์ข่าวรายตัวด้วย AI พร้อมเลือก Engine (Claude CLI / Gemma) |
+| 🪄 **Watchlist + AI** | พิมพ์ ticker แล้วกด "เพิ่ม + AI" — AI วิเคราะห์ชื่อ/ธีม/โซนเข้าซื้อ/DCA/เหตุผล อัตโนมัติ |
+| 💡 **Portfolio Advice** | คำแนะนำพอร์ต Rule-based แบบ instant + ปุ่ม AI deep-dive อ่านคู่มือ Earthh Evans |
+| 📚 **Knowledge Vault** | แท็บคลังความรู้ Earthh Evans Playbooks แยกต่างหาก ค้นหา/กรองได้ |
 | 📬 **Gmail Auto-Sync** | ดึงข้อมูลรายการซื้อขายจาก Dime/WealthX Statement PDF อัตโนมัติ |
 | 🧠 **Mistral AI OCR** | แปลง PDF Statement ที่มีรหัสผ่านเป็นข้อมูลอัตโนมัติ |
 | ⚠️ **Risk Analytics** | Sector Concentration, HHI, Trim Rules, Stop Loss |
 | 📋 **Action Plan** | แผนการจัดพอร์ตตาม FOMC Scenarios |
 | 👁️ **Censor Mode** | ปิดบังตัวเลขสำหรับ Screenshot |
 | 🔄 **Auto-refresh** | อัปเดตราคาทุก 60 วินาที |
+| 💾 **Auto-save to file** | ทุกการเปลี่ยนแปลง (Watchlist, พอร์ต) บันทึกลง `portfolio_data.json` ทันที ไม่หายเมื่อปิด browser |
 
 ---
 
@@ -134,22 +139,27 @@ python3 sync_gmail_dime.py
 
 ---
 
-### 3. 🧠 AI Chat — Claude หรือ Gemini (สำหรับ Risk Advisor)
+### 3. 🧠 AI Backend — Claude CLI, Claude API, หรือ Gemini
 
-ระบบรองรับทั้งสองค่าย เลือกใช้ได้ตามต้องการ:
+ระบบมี Priority ดังนี้: **Claude API key → Claude CLI (server.py) → Gemini API key**
 
-**Claude (Anthropic):**
+**Claude CLI (แนะนำ — ใช้ subscription ไม่เสีย token เพิ่ม):**
+- ติดตั้ง Claude Code CLI แล้วรัน `server.py` ทิ้งไว้
+- Dashboard จะตรวจพบอัตโนมัติและใช้ Claude CLI โดยไม่ต้องใส่ key
+
+**Claude API (Anthropic):**
 1. ไปที่ [https://console.anthropic.com](https://console.anthropic.com)
 2. สมัครบัญชีและเติมเครดิต (เริ่มต้นประมาณ $5)
 3. ไปที่ **API Keys** → **Create Key**
 4. ใส่ key ใน Dashboard → กล่อง "API Key Settings" → Claude tab
 
-**Gemini (Google):**
+**Gemini (Google — ฟรี fallback):**
 1. ไปที่ [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 2. กด **Create API Key** (ฟรี ไม่ต้องเสียเงิน)
 3. ใส่ key ใน Dashboard → กล่อง "API Key Settings" → Gemini tab
 
-> 💡 Key ทั้งหมดถูกบันทึกใน `localStorage` ของ browser เท่านั้น ไม่มีการส่งออก server
+> 💡 RichieGem และ Stock News Intelligence มีปุ่มเลือก Engine (Claude CLI / Gemma) แยกต่างหาก
+> Key ทั้งหมดถูกบันทึกใน `localStorage` ของ browser เท่านั้น ไม่มีการส่งออก server
 
 ---
 
@@ -262,6 +272,8 @@ python3 sync_gmail_dime.py
 | PDF OCR ผิดพลาด | ตรวจสอบ `DIME_PDF_PASSWORD` ใน `.env` ให้ถูกต้อง |
 | Obsidian ไม่แสดงไฟล์ใหม่ | รัน `python3 build_obsidian_knowledge.py` ใหม่ |
 | AI ไม่ตอบ | ตรวจสอบ API Key ใน Dashboard → API Key Settings |
+| Watchlist หายหลังปิด browser | ต้องรัน `server.py` ก่อนเพิ่มข้อมูล — server จะ save ลงไฟล์อัตโนมัติ |
+| Gemma แสดง chain-of-thought | ปกติ — ระบบใช้ prompt แบบ Gemma-safe อยู่แล้ว ถ้ายังเกิด ลอง Claude CLI แทน |
 
 ---
 
