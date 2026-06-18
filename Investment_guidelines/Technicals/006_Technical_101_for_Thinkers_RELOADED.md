@@ -10,18 +10,9 @@ category: Technicals
 
 ## Page 1
 
-Technical 101 for Thinkers · RELOADED 
-© Earthh Evans · Free Distribution Technical 101 RELOADED Page 1 
-
-## Page 2
-
-Technical 101 for Thinkers · RELOADED 
-© Earthh Evans · Free Distribution Technical 101 RELOADED Page 2 
-
-Technical 101 for Thinkers — RELOADED 
-Operational Playbook ส ำหรับนักลงทุนสำย Valuation 
-Compiled & Written by 
-Earthh Evans 
+Technical 101 for Thinkers · RELOADED
+Operational Playbook สำหรับนักลงทุนสาย Valuation
+Compiled & Written by Earthh Evans
 
 หน ังสือเล่มนี้แจกฟรีส ำหร ับน ักลงทุนไทย 
 ห ้ ำมน ำไปขำยต่อ ห ้ ำมตัดทอนเนื้อหำ ห ้ ำมลบเครดิต 
