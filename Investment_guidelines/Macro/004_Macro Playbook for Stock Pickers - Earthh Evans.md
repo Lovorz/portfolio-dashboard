@@ -8,7 +8,7 @@ category: Macro
 
 # 📖 004 Macro Playbook for Stock Pickers - Earthh Evans
 
-INVESTMENT EDUCATION  /  MACRO PLAYBOOK
+INVESTMENT EDUCATION / MACRO PLAYBOOK
 
 Macro Playbook
 

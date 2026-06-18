@@ -11,11 +11,11 @@ category: Valuation
 ## Page 1
 
 Value Investing
-ส ำหร ับผู ้ลงทุนมือใหม่และผู ้ที่อยำกเข ้ำใจให ้ลึกขึ ้น
-(Value Investing = กำรลงทุนแบบเน้นมูลค่ำ)
-ต ้ นฉบับ: Prof. Aswath Damodaran — NYU Stern School of Business
-จ ัดท ำโดย: Earthh Evans | เนื้อหำฟรีเพื่อนักลงทุนไทย
-"ลงทุนแบบมีควำมรู ้คือ อำวุธที่ทรงพลังที่สุด"
+สำหรับผู้ลงทุนมือใหม่และผู้ที่อยากเข้าใจให้ลึกขึ้น
+(Value Investing = การลงทุนแบบเน้นมูลค่า)
+ต้นฉบับ: Prof. Aswath Damodaran — NYU Stern School of Business
+จัดทำโดย: Earthh Evans | เนื้อหาฟรีเพื่อนักลงทุนไทย
+"ลงทุนแบบมีความรู้คือ อาวุธที่ทรงพลังที่สุด"
 
 ## Page 2
 

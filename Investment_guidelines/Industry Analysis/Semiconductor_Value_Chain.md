@@ -10,13 +10,13 @@ category: Industry Analysis
 
 ## Page 1
 
-I N V E S T M E N T  E D U C A T I O N   /   I N D U S T R Y  P R I M E R
+INVESTMENT EDUCATION / INDUSTRY PRIMER
 Semiconductor
 Value Chain
-ภาพรวมทั้งอุตสาหกรรม — ต ้นน ้าถึงปลายน ้า |  เงินไหลไปที่คอขวด ไม่ใช่ทุกคน ในchain
-E A R T H H  E V A N S
+ภาพรวมทั้งอุตสาหกรรม — ต้นน้ำถึงปลายน้ำ | เงินไหลไปที่คอขวด ไม่ใช่ทุกคนในห่วงโซ่
+EARTHH EVANS
 Institutional-quality analysis for retail investors
-จุ ด ก ำ เ นิ ด /   T H E  O R I G I N
+จุดกำเนิด / THE ORIGIN
 ปี 2012 ทีมวิจัย AI ที่ Toronto ใช้ GPU ของ Nvidia (ที่เดิมออกแบบมาเล่นเกม) เทรนโมเดล AlexNet แล้วพบว่าเร็วกว่า CPU หลายสิบเท่า
 — นั่นคือจุดที่ GPU กลายเป็นหัวใจของ AI และเป็นจุดเริ่มของ value chain ที่เราจะเล่าในสไลด์ถัดไป ขอให้สนุกก ำโลก AI ครับ
 
