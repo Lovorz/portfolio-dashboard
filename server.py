@@ -298,6 +298,25 @@ category: {category}
                 self.end_headers()
                 response_body = json.dumps({"status": "error", "message": str(e)})
                 self.wfile.write(response_body.encode('utf-8'))
+        elif self.path == '/api/save_portfolio':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length))
+                if not (data.get('wealthx_funds') and data.get('dime_assets')):
+                    raise ValueError("Invalid portfolio schema")
+                with open('portfolio_data.json', 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                print("✓ portfolio_data.json saved")
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok"}).encode('utf-8'))
+            except Exception as e:
+                print("❌ save_portfolio error:", e)
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
         else:
             super().do_POST()
 

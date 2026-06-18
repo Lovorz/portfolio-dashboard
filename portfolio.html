@@ -2474,6 +2474,12 @@
     // Save modifications back to LocalStorage
     function def_saveLocal() {
       localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+      // Also persist to portfolio_data.json via server (fire-and-forget)
+      fetch('/api/save_portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(portfolioData)
+      }).catch(() => {}); // silent if server not running
     }
 
     // Setup the automatic quote refresh timer
