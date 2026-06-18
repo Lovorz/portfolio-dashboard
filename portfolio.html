@@ -917,16 +917,19 @@
     }
     
     .playbook-summary {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 12px;
       flex-grow: 1;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 4;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
-      max-height: 4.6rem;
+      max-height: 3.5rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      letter-spacing: -0.01em;
     }
     
     .playbook-obsidian-link {
@@ -1054,17 +1057,22 @@
           <i class="fa-solid fa-lightbulb"></i>
         </div>
         <div class="censorable">
-          <p id="personalized-advice" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-            กำลังคำนวณคำแนะนำตามพอร์ตจริงและประวัติของคุณ...
+          <p id="personalized-advice" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+            กำลังคำนวณคำแนะนำตามพอร์ตจริง...
           </p>
           <div class="metric-sub" style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div>
               <i class="fa-solid fa-user-tie" style="font-size: 0.8rem; color: var(--accent-secondary);"></i>
               <span id="advice-profile-summary" style="font-size: 0.75rem;">ประวัติ: กำลังโหลด...</span>
             </div>
-            <button onclick="openProfileModal()" style="background: transparent; border: none; color: var(--accent-secondary); cursor: pointer; font-size: 0.75rem;" title="แก้ไขข้อมูลส่วนตัว">
-              <i class="fa-solid fa-user-pen"></i> แก้ไข
-            </button>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <button onclick="generatePortfolioAdvice()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem;" title="ถาม AI เพิ่มเติม (ใช้คู่มือ Earthh Evans)">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </button>
+              <button onclick="openProfileModal()" style="background: transparent; border: none; color: var(--accent-secondary); cursor: pointer; font-size: 0.75rem;" title="แก้ไขข้อมูลส่วนตัว">
+                <i class="fa-solid fa-user-pen"></i> แก้ไข
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1086,6 +1094,10 @@
       <button class="tab-trigger" onclick="switchTab('strategy')">
         <i class="fa-solid fa-compass-drafting"></i>
         <span>กลยุทธ์ & Watchlist</span>
+      </button>
+      <button class="tab-trigger" onclick="switchTab('knowledge')">
+        <i class="fa-solid fa-book-open"></i>
+        <span>คลังความรู้</span>
       </button>
       <button class="tab-trigger" onclick="switchTab('news')">
         <i class="fa-solid fa-newspaper"></i>
@@ -1402,20 +1414,28 @@
 
     <!-- Watchlist and Ideas Section -->
     <div class="col-12 glass-card">
-      <h3 class="section-title"><i class="fa-solid fa-magnifying-glass-chart"></i> รายการเฝ้าดู & สกัดไอเดียหุ้น (Watchlist Ideas)</h3>
+      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <span><i class="fa-solid fa-magnifying-glass-chart"></i> รายการเฝ้าดู & สกัดไอเดียหุ้น (Watchlist Ideas)</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="watchlist-add-ticker" class="form-control" placeholder="Ticker เช่น NVDA" style="width:120px;font-size:0.8rem;padding:5px 10px;height:auto;text-transform:uppercase;" onkeydown="if(event.key==='Enter')addWatchlistWithAI()" oninput="this.value=this.value.toUpperCase()">
+          <button onclick="addWatchlistWithAI()" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;white-space:nowrap;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> เพิ่ม + AI
+          </button>
+        </div>
+      </h3>
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>สัญลักษณ์</th>
-              <th>ชื่อบริษัท</th>
-              <th>ธีม / จุดเด่น</th>
+              <th>ชื่อบริษัท / ธีม</th>
               <th>ราคาปัจจุบัน</th>
               <th>โซนเข้าซื้อ</th>
               <th>สถานะเข้าซื้อ</th>
-              <th>จำนวน DCA แนะนำ</th>
+              <th>DCA แนะนำ</th>
               <th>ความสำคัญ</th>
-              <th>ลบ</th>
+              <th>เหตุผล</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="watchlist-table-body">
@@ -1425,8 +1445,30 @@
       </div>
     </div>
 
-    <!-- Obsidian Knowledge Vault & Earthh Evans Playbooks Section -->
-    <div class="col-12 glass-card" style="margin-top: 16px;">
+    <!-- RichieGem batch report — lives next to the watchlist it reads from -->
+    <div class="col-12 glass-card">
+      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span><i class="fa-solid fa-cat"></i> RichieGem รายงานรวม Watchlist</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.68rem;color:var(--text-muted);">Engine: <strong style="color:var(--accent-secondary);">Claude CLI</strong> (Gemma เป็น fallback)</span>
+          <button class="btn btn-primary" id="richiegem-run-btn" onclick="runRichieGemReport()" style="padding:6px 14px;font-size:0.82rem;white-space:nowrap;">
+            <i class="fa-solid fa-bolt"></i> สร้างรายงาน
+          </button>
+        </div>
+      </h3>
+      <p style="font-size:0.74rem;color:var(--text-muted);margin:0 0 10px;">
+        ไล่วิเคราะห์ข่าวล่าสุดของหุ้นทุกตัวใน Watchlist สไตล์ Meme/Guru (Sentiment + ประเด็นเด่น + ควรเข้า/ถือ/หนี) — เหมือนรายงานอัตโนมัติของบอท RichieGem
+      </p>
+      <div id="richiegem-report" style="display:none;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
+        <!-- Per-ticker report cards render here -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab 4: Knowledge Vault -->
+  <div id="tab-knowledge" class="tab-content dashboard-grid" style="margin-top: 0; display: none;">
+    <div class="col-12 glass-card">
       <h3 class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
         <span><i class="fa-solid fa-book-open"></i> คลังความรู้นักบริหารความเสี่ยง (Earthh Evans Playbooks) & Obsidian Vault</span>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -1437,7 +1479,7 @@
       <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
         ข้อมูลคู่มือการลงทุนจากโฟลเดอร์ Google Drive ได้รับการดาวน์โหลด แปลงเป็นรูปแบบ Markdown (.md) และเชื่อมโยงผ่าน Obsidian Backlinks <code>[[คู่มือ]]</code> เก็บไว้ในโฟลเดอร์ <code>Investment_guidelines/</code> เรียบร้อยแล้ว คุณสามารถนำโฟลเดอร์ดังกล่าวไปเปิดในโปรแกรม Obsidian เป็น Second Brain ส่วนตัวเพื่อดู Link Graph ความรู้ได้ทันที ด้านล่างนี้คือเนื้อหาสำคัญจากแต่ละคู่มือที่ป้อนเข้าเป็น Algorithm วิเคราะห์พอร์ตของ Earthh Evans AI
       </p>
-      
+
       <!-- Search & Filters Container -->
       <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; align-items:center; background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--card-border);">
         <div style="flex:1; min-width: 200px; position:relative;">
@@ -1456,7 +1498,7 @@
     </div>
   </div>
 
-  <!-- Tab 4: YouTube Channels & News -->
+  <!-- Tab 5: YouTube Channels & News -->
   <div id="tab-news" class="tab-content dashboard-grid" style="margin-top: 0; display: none;">
 
     <!-- Row 6: YouTube Channels Feed & Pasting Facebook post analyzer -->
@@ -1525,24 +1567,6 @@
       </div>
     </div>
 
-    <!-- RichieGem-style batch report over the whole watchlist -->
-    <div class="col-12 glass-card">
-      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span><i class="fa-solid fa-cat"></i> RichieGem รายงานรวม Watchlist</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.68rem;color:var(--text-muted);">Engine: <strong style="color:var(--accent-secondary);">Claude CLI</strong> (Gemma เป็น fallback)</span>
-          <button class="btn btn-primary" id="richiegem-run-btn" onclick="runRichieGemReport()" style="padding:6px 14px;font-size:0.82rem;white-space:nowrap;">
-            <i class="fa-solid fa-bolt"></i> สร้างรายงาน
-          </button>
-        </div>
-      </h3>
-      <p style="font-size:0.74rem;color:var(--text-muted);margin:0 0 10px;">
-        ไล่วิเคราะห์ข่าวล่าสุดของหุ้นทุกตัวใน Watchlist สไตล์ Meme/Guru (Sentiment + ประเด็นเด่น + ควรเข้า/ถือ/หนี) — เหมือนรายงานอัตโนมัติของบอท RichieGem
-      </p>
-      <div id="richiegem-report" style="display:none;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
-        <!-- Per-ticker report cards render here -->
-      </div>
-    </div>
   </div>
 
   <!-- Modal for Adding Assets -->
@@ -2830,15 +2854,36 @@
 
       // Advice profile and personalized details
       document.getElementById('advice-profile-summary').innerText = `อายุ ${portfolioData.investor_profile.age} ปี · รายได้ ฿${(portfolioData.investor_profile.income/1000).toFixed(0)}k/ด · รายจ่าย ฿${(portfolioData.investor_profile.expense/1000).toFixed(0)}k`;
-      
-      // Calculate a personalized advice string
-      let adviceText = "";
-      if (cashPct < 40) {
-        adviceText = "⚠️ สัดส่วนเงินสำรอง (Cash Buffer) ค่อนข้างต่ำ แนะนำลดการทยอย DCA กองทุน WealthX ชั่วคราว และเพิ่มน้ำหนักเติมเงินสดเข้ากองทุนตลาดเงินให้พร้อมก่อนตลาดผันผวน";
-      } else if (totalWealthxThb / totalThb > 0.6) {
-        adviceText = "⚖️ สัดส่วนกองทุนรวม WealthX ค่อนข้างสูง แนะนำกระจายการสะสมระยะยาวไปที่สินทรัพย์ Dime ต่างประเทศในรูปสกุลเงิน USD (เช่น VTI หรือหุ้นเทคโนโลยีรายตัว) เพื่อบริหารความเสี่ยงค่าเงิน THB";
+
+      // Rule-based advice — instant, no AI call on load
+      // Store metrics for optional AI refresh
+      window._adviceMetrics = {
+        cashPct, cashThb, targetCash,
+        totalThb,
+        totalWealthxThb,
+        dimeUsdThb: totalDimeUsd * exchangeRate,
+        netPlPct, netPlThb,
+        profile: portfolioData.investor_profile
+      };
+      const wealthxPctNow = totalThb > 0 ? totalWealthxThb / totalThb * 100 : 0;
+      const dimePctNow = totalThb > 0 ? (totalDimeUsd * exchangeRate) / totalThb * 100 : 0;
+      const profile = portfolioData.investor_profile;
+      const savingsRate = profile.income > 0 ? (profile.income - profile.expense) / profile.income * 100 : 0;
+      let adviceText;
+      if (cashPct < 30) {
+        adviceText = "🚨 เงินสำรองวิกฤต (ต่ำกว่า 30%) — หยุด DCA ทุกบัญชีทันที เติมเงินสำรองให้ถึง 50% ก่อนกลับมาลงทุน";
+      } else if (cashPct < 60) {
+        adviceText = "⚠️ เงินสำรองยังไม่พอ — ลด DCA WealthX ลงครึ่งหนึ่ง แล้วโอนส่วนที่เหลือเข้ากองทุนตลาดเงินจนกว่าจะถึง 70%";
+      } else if (wealthxPctNow > 65) {
+        adviceText = "⚖️ พอร์ต WealthX หนักเกินไป (" + wealthxPctNow.toFixed(0) + "%) — เดือนนี้ DCA เพิ่มฝั่ง Dime (USD) แทน เพื่อกระจายความเสี่ยงค่าเงินบาท";
+      } else if (dimePctNow < 15 && cashPct >= 70) {
+        adviceText = "📈 USD exposure ต่ำ (" + dimePctNow.toFixed(0) + "%) — บัฟเฟอร์พร้อมแล้ว แนะนำเพิ่มน้ำหนัก DCA ฝั่ง Dime ในเดือนนี้";
+      } else if (cashPct >= 95) {
+        adviceText = "🟢 บัฟเฟอร์เต็มแล้ว — ปลอดภัยเพิ่ม DCA ตามแผนปกติ หรือพิจารณาลงทุนเพิ่มในหุ้นที่ Watchlist หากราคาเหมาะสม";
+      } else if (netPlPct > 25) {
+        adviceText = "💰 พอร์ตกำไร " + netPlPct.toFixed(1) + "% — พิจารณา Rebalance ตาม Playbook: ขายบางส่วนที่บวกมากกว่า 30% และกระจายสู่สินทรัพย์อื่น";
       } else {
-        adviceText = "🟢 สัดส่วนรวมของพอร์ต Dime (สินทรัพย์สหรัฐฯ) และ WealthX (กองทุนรวมระดับโลก) อยู่ในเกณฑ์เหมาะสมมาก สภาพคล่องพร้อม สามารถสะสมตามแผน DCA รายเดือนได้ต่อเนื่องครับ";
+        adviceText = "🟢 พอร์ตสมดุลดี — ดำเนิน DCA ตามแผนรายเดือนต่อเนื่อง รักษาสัดส่วน WealthX " + wealthxPctNow.toFixed(0) + "% / Dime " + dimePctNow.toFixed(0) + "%";
       }
       document.getElementById('personalized-advice').innerText = adviceText;
     }
@@ -2972,36 +3017,55 @@
       const tbody = document.getElementById('watchlist-table-body');
       tbody.innerHTML = '';
 
+      if (!portfolioData.ideas || portfolioData.ideas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:20px;">ยังไม่มีหุ้นใน Watchlist — พิมพ์ ticker แล้วกด "เพิ่ม + AI"</td></tr>';
+        return;
+      }
+
       portfolioData.ideas.forEach((id, idx) => {
+        const tr = document.createElement('tr');
+
+        if (id._loading) {
+          tr.innerHTML = `
+            <td><strong>${id.t}</strong></td>
+            <td colspan="7" style="color:var(--text-muted);font-size:0.8rem;">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> AI กำลังวิเคราะห์ ${id.t}...
+            </td>
+            <td></td>
+          `;
+          tbody.appendChild(tr);
+          return;
+        }
+
         const livePrice = livePrices[id.t] || 0;
         let zoneClass = "out-zone";
         let zoneText = "WAITING";
-        
         if (livePrice > 0) {
           if (livePrice <= id.entryHigh && livePrice >= id.entryLow) {
-            zoneClass = "in-zone";
-            zoneText = "🟢 BUY ZONE";
+            zoneClass = "in-zone"; zoneText = "🟢 BUY ZONE";
           } else if (livePrice < id.entryLow) {
-            zoneClass = "in-zone";
-            zoneText = "🔥 UNDER ZONE";
+            zoneClass = "in-zone"; zoneText = "🔥 UNDER ZONE";
           } else {
-            zoneClass = "out-zone";
-            zoneText = "ABOVE ZONE";
+            zoneClass = "out-zone"; zoneText = "ABOVE ZONE";
           }
         }
 
-        const tr = document.createElement('tr');
+        const displayName = id.name !== id.t ? id.name : id.t;
         tr.innerHTML = `
           <td><strong>${id.t}</strong></td>
-          <td>${id.name}</td>
-          <td>${id.theme}</td>
-          <td>$${livePrice > 0 ? livePrice.toFixed(2) : '-'}</td>
-          <td>${id.entry}</td>
-          <td><span class="entry-alert-badge ${zoneClass}">${zoneText}</span></td>
-          <td>${id.dca}</td>
-          <td><span class="badge badge-priority-${id.priority}">${id.priority}</span></td>
           <td>
-            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteAsset('watchlist', ${idx})"><i class="fa-solid fa-trash"></i></button>
+            <div style="font-weight:500;font-size:0.85rem;">${displayName}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">${id.theme || ''}</div>
+          </td>
+          <td style="font-weight:600;">$${livePrice > 0 ? livePrice.toFixed(2) : '–'}</td>
+          <td style="font-size:0.8rem;">${id.entry || '–'}</td>
+          <td><span class="entry-alert-badge ${zoneClass}">${zoneText}</span></td>
+          <td style="font-size:0.8rem;">${id.dca || '–'}</td>
+          <td><span class="badge badge-priority-${id.priority || 'medium'}">${id.priority || 'medium'}</span></td>
+          <td style="font-size:0.75rem;color:var(--text-muted);max-width:180px;white-space:normal;line-height:1.3;">${id.why || ''}</td>
+          <td style="white-space:nowrap;">
+            <button class="btn" style="padding:3px 7px;font-size:0.72rem;" title="ให้ AI วิเคราะห์ใหม่" onclick="refreshWatchlistEntry(${idx})"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            <button class="btn" style="padding:3px 7px;font-size:0.72rem;margin-left:3px;" onclick="deleteAsset('watchlist',${idx})"><i class="fa-solid fa-trash"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -4543,6 +4607,61 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
       return i > 0 ? t.slice(i) : (t || '');
     }
 
+    // Called by the 🔄 button — AI deep-dive using guidebook knowledge
+    async function generatePortfolioAdvice() {
+      const el = document.getElementById('personalized-advice');
+      if (!el) return;
+
+      const m = window._adviceMetrics;
+      if (!m) return;
+
+      if (!aiAvailable()) {
+        el.innerText = "⚠️ ไม่พบ AI — กรุณาตั้งค่า API key ในการตั้งค่า";
+        return;
+      }
+
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">⏳ AI อ่านคู่มือ Earthh Evans...</span>';
+
+      // Pull Risk + Allocation + Basics principles as knowledge base
+      const relevantCats = new Set(['Risk', 'Allocation', 'Basics']);
+      const knowledgeSnippets = (window.earthhEvansPrinciples || [])
+        .filter(p => relevantCats.has(p.category))
+        .map(p => `[${p.category}] ${p.name}:\n${(p.summary || '').slice(0, 450)}`)
+        .join('\n\n');
+
+      const wealthxPct = m.totalThb > 0 ? (m.totalWealthxThb / m.totalThb * 100).toFixed(1) : '0';
+      const dimePct    = m.totalThb > 0 ? (m.dimeUsdThb / m.totalThb * 100).toFixed(1) : '0';
+      const cashPctFmt = m.cashPct.toFixed(0);
+
+      const prompt = `คุณเป็น AI ที่ปรึกษาการลงทุนส่วนตัวที่อ่านคู่มือ Earthh Evans มาแล้ว
+
+ข้อมูลพอร์ตปัจจุบัน:
+- เงินสำรอง (Cash Buffer): ฿${m.cashThb.toLocaleString()} / เป้า ฿${m.targetCash.toLocaleString()} (${cashPctFmt}%)
+- สัดส่วน WealthX (กองทุนรวม): ${wealthxPct}%
+- สัดส่วน Dime USD: ${dimePct}%
+- กำไร/ขาดทุน: ${m.netPlPct.toFixed(1)}% (฿${Math.round(m.netPlThb).toLocaleString()})
+- นักลงทุน: อายุ ${m.profile.age} ปี รายได้ ฿${(m.profile.income/1000).toFixed(0)}k/เดือน รายจ่าย ฿${(m.profile.expense/1000).toFixed(0)}k/เดือน
+
+ความรู้จากคู่มือ Earthh Evans:
+${knowledgeSnippets}
+
+จงให้คำแนะนำที่เฉพาะเจาะจงกับสภาพพอร์ตนี้ โดยอ้างอิงหลักการจากคู่มือที่เกี่ยวข้อง ตอบภาษาไทย 2-3 ประโยค กระชับ ตรงประเด็น`;
+
+      try {
+        const text = await callAI({
+          system: 'คุณเป็นที่ปรึกษาการลงทุนส่วนตัว ตอบภาษาไทย กระชับ ไม่เกิน 3 ประโยค อ้างอิงหลักการจากคู่มือที่ให้มาเสมอ',
+          messages: [{ role: 'user', content: prompt }],
+          maxTokens: 350,
+          fast: true
+        });
+        el.innerText = (text || '').trim();
+      } catch (e) {
+        el.innerText = m.cashPct < 40
+          ? "⚠️ เงินสำรองต่ำกว่า 40% แนะนำชะลอ DCA และเติมเงินสำรองก่อน"
+          : "🟢 พอร์ตอยู่ในเกณฑ์ดี ดำเนิน DCA ตามแผนต่อได้";
+      }
+    }
+
     async function analyzeStockNews() {
       const ticker = document.getElementById('news-ticker-input').value.trim().toUpperCase();
       if (!ticker) return;
@@ -4766,6 +4885,127 @@ ${newsText}`;
 
       btn.disabled = false;
       btn.innerHTML = btnHtml;
+    }
+
+    async function _analyzeWatchlistTicker(ticker, currentPrice) {
+      const m = window._adviceMetrics;
+      const budget = m ? Math.round((m.profile.income - m.profile.expense) * 0.3) : 8000;
+      const priceStr = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : 'ไม่ทราบ';
+
+      const prompt = `วิเคราะห์หุ้น ${ticker} สำหรับนักลงทุนไทย
+ราคาปัจจุบัน: ${priceStr}
+งบ DCA รายเดือนที่จัดสรรได้: ฿${budget.toLocaleString()}
+
+ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น:
+{
+  "name": "ชื่อบริษัทเต็มภาษาอังกฤษ",
+  "theme": "ธีม/จุดเด่น ไม่เกิน 5 คำ",
+  "why": "เหตุผลลงทุน ภาษาไทย ไม่เกิน 15 คำ",
+  "entryLow": 0.00,
+  "entryHigh": 0.00,
+  "entry": "$xxx–yyy",
+  "dca": "฿x,000–y,000",
+  "priority": "high หรือ medium หรือ low"
+}`;
+
+      const text = await callAI({
+        system: 'คุณเป็น AI วิเคราะห์หุ้น ตอบ JSON เท่านั้น ห้ามมีคำอธิบายหรือ markdown',
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 300,
+        fast: true
+      });
+
+      const match = text.match(/\{[\s\S]*?\}/);
+      if (!match) throw new Error('no JSON in response');
+      return JSON.parse(match[0]);
+    }
+
+    async function addWatchlistWithAI() {
+      const input = document.getElementById('watchlist-add-ticker');
+      const ticker = (input.value || '').trim().toUpperCase();
+      if (!ticker) return;
+      if (!portfolioData.ideas) portfolioData.ideas = [];
+      if (portfolioData.ideas.find(id => id.t === ticker)) {
+        input.value = '';
+        alert(`${ticker} อยู่ใน Watchlist แล้ว`);
+        return;
+      }
+
+      input.value = '';
+      const entry = { t: ticker, name: ticker, theme: '', cat: 'watch', why: '', entry: '–', entryLow: 0, entryHigh: 9999999, dca: '–', priority: 'medium', _loading: true };
+      portfolioData.ideas.push(entry);
+      renderWatchlist();
+
+      // Fetch live price for this ticker
+      let currentPrice = livePrices[ticker] || 0;
+      if (!currentPrice) {
+        try {
+          const r = await fetch(`/api/yahoo_finance?symbols=${ticker}`);
+          const d = await r.json();
+          currentPrice = d?.quoteResponse?.result?.[0]?.regularMarketPrice || 0;
+          if (currentPrice) livePrices[ticker] = currentPrice;
+        } catch(e) {}
+      }
+
+      if (aiAvailable()) {
+        try {
+          const data = await _analyzeWatchlistTicker(ticker, currentPrice);
+          Object.assign(entry, data);
+        } catch(e) {
+          // Fallback: simple price-based entry zone
+          if (currentPrice > 0) {
+            const lo = +(currentPrice * 0.88).toFixed(2);
+            const hi = +(currentPrice * 0.95).toFixed(2);
+            entry.entryLow = lo; entry.entryHigh = hi;
+            entry.entry = `$${lo}–${hi}`;
+          } else {
+            entry.entry = 'TBD';
+          }
+          entry.dca = '฿5,000–10,000';
+        }
+      } else {
+        // No AI — use price-based fallback
+        if (currentPrice > 0) {
+          const lo = +(currentPrice * 0.88).toFixed(2);
+          const hi = +(currentPrice * 0.95).toFixed(2);
+          entry.entryLow = lo; entry.entryHigh = hi;
+          entry.entry = `$${lo}–${hi}`;
+        }
+        entry.dca = '฿5,000–10,000';
+        entry.why = 'เพิ่มด้วยตนเอง';
+      }
+
+      delete entry._loading;
+      def_saveLocal();
+      renderWatchlist();
+      renderNewsTickerChips();
+    }
+
+    async function refreshWatchlistEntry(idx) {
+      const entry = portfolioData.ideas[idx];
+      if (!entry || !aiAvailable()) return;
+
+      entry._loading = true;
+      renderWatchlist();
+
+      let currentPrice = livePrices[entry.t] || 0;
+      if (!currentPrice) {
+        try {
+          const r = await fetch(`/api/yahoo_finance?symbols=${entry.t}`);
+          const d = await r.json();
+          currentPrice = d?.quoteResponse?.result?.[0]?.regularMarketPrice || 0;
+          if (currentPrice) livePrices[entry.t] = currentPrice;
+        } catch(e) {}
+      }
+
+      try {
+        const data = await _analyzeWatchlistTicker(entry.t, currentPrice);
+        Object.assign(entry, data);
+      } catch(e) {}
+
+      delete entry._loading;
+      def_saveLocal();
+      renderWatchlist();
     }
 
     function quickAddToWatchlist(ticker) {
