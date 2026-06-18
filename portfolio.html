@@ -4728,15 +4728,33 @@ ${knowledgeSnippets}
       const aiLabel = _newsUseGemma ? 'Gemma' : (getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini'));
       _showNewsResult(`<span style="opacity:0.6;font-size:0.8rem;">⏳ วิเคราะห์ด้วย ${aiLabel} (${source})...</span>`);
 
-      const prompt = `คุณคือนักวิเคราะห์การลงทุนระดับสถาบัน วิเคราะห์ข่าวของหุ้น ${ticker}
+      const portNote = inPort ? `ผู้ใช้ถือ ${ticker} อยู่ — ${inPort.shares.toFixed(4)} หุ้น, ต้นทุน $${inPort.cost.toFixed(2)}/หุ้น, P/L ${inPort.pct?.toFixed(1)||'?'}%` : '';
+      const thinNote = thinSignal ? `ไม่มีข่าวเจาะจง ${ticker} เลย — เป็นข่าวกลุ่ม/รวม ลดความเชื่อมั่นด้วย` : '';
+
+      const prompt = _newsUseGemma
+        ? `คุณคือนักวิเคราะห์การลงทุน วิเคราะห์ข่าวของหุ้น ${ticker} เป็นภาษาไทย
+${portNote ? `\n${portNote}\n` : ''}${thinNote ? `\n${thinNote}\n` : ''}
+ตอบเฉพาะคำตอบสุดท้ายตามรูปแบบด้านล่างเท่านั้น ห้ามแสดงขั้นตอนการคิด การร่าง หรือการตรวจสอบใดๆ ห้ามมีคำเกริ่นนำ
+
+## Sentiment: 🟢 Bullish / 🔴 Bearish / 🟡 Neutral — ความเชื่อมั่น (สูง/กลาง/ต่ำ)
+## ประเด็นสำคัญ (3-5 ข้อ)
+- ...
+## ผลกระทบต่อ${inPort ? 'พอร์ตที่ถืออยู่' : 'นักลงทุน'}
+...
+## คำแนะนำ: เพิ่ม Watchlist / ถือต่อ / ลดพอร์ต / ยังไม่ทำอะไร — เหตุผล 1-2 ประโยค
+## โซนราคาเข้าซื้อ: $xxx–$xxx (หรือ N/A)
+
+ข่าวล่าสุด (${Math.min(articles.length,8)} ชิ้น):
+${newsText}`
+        : `คุณคือนักวิเคราะห์การลงทุนระดับสถาบัน วิเคราะห์ข่าวของหุ้น ${ticker}
 
 กฎสำคัญ:
-1. เขียนด้วยสำนวนของคุณเองทั้งหมด ห้ามคัดลอกหัวข้อข่าวหรือประโยคจากต้นฉบับตรงๆ ให้เรียบเรียงใหม่เสมอ (การคัดลอกคำต่อคำทำให้คำตอบถูกบล็อกและตัดทอน)
-2. ข่าวแต่ละชิ้นมี scope กำกับ: FOCUSED/PRIMARY = เป็นข่าวของ ${ticker} จริงๆ; COMPARISON = ${ticker} เป็นหนึ่งในไม่กี่ตัว; ROUNDUP/GENERAL = ${ticker} ถูกเอ่ยถึงผ่านๆ ปนกับหุ้นอื่นจำนวนมาก
-3. ตัดสิน Sentiment และคำแนะนำจากข่าว FOCUSED/PRIMARY เท่านั้น ส่วน COMPARISON/ROUNDUP ให้ถือเป็นบริบทของกลุ่มอุตสาหกรรม ไม่ใช่สัญญาณของ ${ticker} โดยตรง
-4. ถ้าไม่มีข่าว FOCUSED/PRIMARY เลย (มีแต่ข่าวรวม/ข่าวกลุ่ม) ให้บอกตรงๆ ว่าตอนนี้แทบไม่มีข่าวเจาะจง ${ticker} และให้ความเชื่อมั่นต่ำ
+1. เขียนด้วยสำนวนของคุณเองทั้งหมด ห้ามคัดลอกหัวข้อข่าวหรือประโยคจากต้นฉบับตรงๆ ให้เรียบเรียงใหม่เสมอ
+2. ข่าวแต่ละชิ้นมี scope กำกับ: FOCUSED/PRIMARY = เป็นข่าวของ ${ticker} จริงๆ; COMPARISON = ${ticker} เป็นหนึ่งในไม่กี่ตัว; ROUNDUP/GENERAL = ${ticker} ถูกเอ่ยถึงผ่านๆ
+3. ตัดสิน Sentiment และคำแนะนำจากข่าว FOCUSED/PRIMARY เท่านั้น ส่วน COMPARISON/ROUNDUP ให้ถือเป็นบริบทกลุ่มอุตสาหกรรม
+4. ถ้าไม่มีข่าว FOCUSED/PRIMARY เลย ให้บอกตรงๆ และลดความเชื่อมั่น
 
-${inPort ? `หมายเหตุ: ผู้ใช้ถือ ${ticker} อยู่ — ${inPort.shares.toFixed(4)} หุ้น, ต้นทุน $${inPort.cost.toFixed(2)}/หุ้น, P/L ปัจจุบัน ${inPort.pct?.toFixed(1)||'?'}%\n` : ''}${thinSignal ? `\nสำคัญ: ข่าวด้านล่างไม่มีชิ้นไหนเจาะจง ${ticker} เลย เป็นข่าวกลุ่ม/ข่าวรวม โปรดสะท้อนเรื่องนี้และลดความเชื่อมั่น\n` : ''}
+${portNote ? `หมายเหตุ: ${portNote}\n` : ''}${thinNote ? `\nสำคัญ: ${thinNote}\n` : ''}
 รายการข่าว (มี scope กำกับ):
 ${newsText}
 
@@ -4754,7 +4772,8 @@ ${newsText}
 $xxx–$xxx (หรือ N/A)`;
 
       try {
-        const analysis = await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 1024, fast: true, forceGemini: _newsUseGemma, geminiModelPattern: _newsUseGemma ? /gemma/i : null });
+        const raw = await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 1024, fast: true, forceGemini: _newsUseGemma, geminiModelPattern: _newsUseGemma ? /gemma/i : null });
+        const analysis = _stripThinking(raw);
 
         _showNewsResult(`
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
