@@ -1450,7 +1450,10 @@
       <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
         <span><i class="fa-solid fa-cat"></i> RichieGem รายงานรวม Watchlist</span>
         <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.68rem;color:var(--text-muted);">Engine: <strong style="color:var(--accent-secondary);">Claude CLI</strong> (Gemma เป็น fallback)</span>
+          <select id="richiegem-engine" style="font-size:0.73rem;padding:4px 8px;background:rgba(0,0,0,0.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary);cursor:pointer;">
+            <option value="claude">Claude CLI</option>
+            <option value="gemma">Gemma</option>
+          </select>
           <button class="btn btn-primary" id="richiegem-run-btn" onclick="runRichieGemReport()" style="padding:6px 14px;font-size:0.82rem;white-space:nowrap;">
             <i class="fa-solid fa-bolt"></i> สร้างรายงาน
           </button>
@@ -1512,7 +1515,11 @@
     <div class="col-6 glass-card">
       <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
         <span><i class="fa-solid fa-satellite-dish"></i> Stock News Intelligence</span>
-        <div style="display:flex;gap:5px;">
+        <div style="display:flex;gap:5px;align-items:center;">
+          <select id="news-engine" style="font-size:0.73rem;padding:4px 8px;background:rgba(0,0,0,0.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary);cursor:pointer;">
+            <option value="claude">Claude CLI</option>
+            <option value="gemma">Gemma</option>
+          </select>
           <button onclick="toggleNewsApiKeySection()" style="background:transparent;border:1px solid var(--card-border);color:var(--text-muted);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.73rem;line-height:1.6;">⚙️ AI Key</button>
           <button onclick="toggleFmpKeySection()" style="background:transparent;border:1px solid var(--card-border);color:var(--text-muted);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.73rem;line-height:1.6;">⚙️ FMP Key</button>
         </div>
@@ -4717,7 +4724,8 @@ ${knowledgeSnippets}
       }
 
       // 4. Analyze with AI
-      const aiLabel = getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini');
+      const _newsUseGemma = (document.getElementById('news-engine')?.value === 'gemma');
+      const aiLabel = _newsUseGemma ? 'Gemma' : (getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini'));
       _showNewsResult(`<span style="opacity:0.6;font-size:0.8rem;">⏳ วิเคราะห์ด้วย ${aiLabel} (${source})...</span>`);
 
       const prompt = `คุณคือนักวิเคราะห์การลงทุนระดับสถาบัน วิเคราะห์ข่าวของหุ้น ${ticker}
@@ -4746,7 +4754,7 @@ ${newsText}
 $xxx–$xxx (หรือ N/A)`;
 
       try {
-        const analysis = await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 1024, fast: true });
+        const analysis = await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 1024, fast: true, forceGemini: _newsUseGemma, geminiModelPattern: _newsUseGemma ? /gemma/i : null });
 
         _showNewsResult(`
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -4819,7 +4827,8 @@ $xxx–$xxx (หรือ N/A)`;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง...';
       box.innerHTML = '';
 
-      const backend = getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini (Gemma)');
+      const useGemma = (document.getElementById('richiegem-engine')?.value === 'gemma');
+      const backend = useGemma ? 'Gemma' : (getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini'));
       const header = document.createElement('div');
       header.style.cssText = 'font-size:0.72rem;color:var(--text-muted);';
       header.textContent = `รายงาน ${tickers.length} ตัว · ${new Date().toLocaleString('th-TH')} · ${backend}`;
@@ -4860,7 +4869,7 @@ $xxx–$xxx (หรือ N/A)`;
 ${newsText}`;
 
           // fast:false → sonnet. Haiku's Thai is garbled/unreliable for this; sonnet is clean.
-          const analysis = _stripThinking(await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 2048, fast: false, geminiModelPattern: /gemma/i }));
+          const analysis = _stripThinking(await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 2048, fast: false, forceGemini: useGemma, geminiModelPattern: useGemma ? /gemma/i : null }));
           const meta = `<span style="font-size:0.65rem;color:var(--text-muted);">${src} · ${_lastAIModel}</span>`;
           if (!/##/.test(analysis)) {
             // Model didn't follow the format — show headlines instead of garbled prose.
