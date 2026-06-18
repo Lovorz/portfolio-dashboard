@@ -1,10 +1,15 @@
 import os
 import sys
+import re
 import json
+import shutil
 import base64
 import subprocess
 import urllib.request
 from urllib.parse import urlparse, parse_qs
+
+# Resolve the Claude Code CLI once (PATH inside the server may differ from the shell).
+CLAUDE_BIN = shutil.which('claude') or os.path.expanduser('~/.local/bin/claude')
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from concurrent.futures import ThreadPoolExecutor
 
@@ -100,10 +105,111 @@ class CustomHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
+        elif parsed_url.path == '/api/fmp_news':
+            query_params = parse_qs(parsed_url.query)
+            ticker = query_params.get('ticker', [''])[0].strip()
+            apikey = query_params.get('apikey', [''])[0].strip()
+            if not ticker or not apikey:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Missing ticker or apikey parameter"}).encode('utf-8'))
+                return
+            
+            # FMP free tier exposes /stable/fmp-articles (general feed), NOT /api/v3/stock_news (paywalled).
+            # Mirror the RichieGem approach: page through the feed and filter by ticker client-side.
+            ticker_up = ticker.upper()
+            def _clean_html(raw):
+                return re.sub(r'<[^>]+>', '', raw or '').strip()
+            try:
+                results = []
+                for page in range(3):  # 3 pages x 50 = up to 150 recent articles
+                    page_url = (f"https://financialmodelingprep.com/stable/fmp-articles"
+                                f"?page={page}&limit=50&apikey={urllib.parse.quote(apikey)}")
+                    req = urllib.request.Request(page_url, headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        articles = json.loads(response.read())
+                    if not isinstance(articles, list) or not articles:
+                        break
+                    for item in articles:
+                        tickers_field = (item.get('tickers') or '')
+                        title = item.get('title') or ''
+                        if ticker_up in tickers_field.upper() or ticker_up in title.upper():
+                            related = [t.split(':')[-1].strip().upper()
+                                       for t in tickers_field.split(',') if t.strip()]
+                            results.append({
+                                'title': title,
+                                'publishedDate': item.get('date', ''),
+                                'site': item.get('site') or item.get('publisher') or 'FMP',
+                                'text': _clean_html(item.get('content', ''))[:600],
+                                'url': item.get('link', '#'),
+                                'relatedTickers': related
+                            })
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(results).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            return
+
         # Fallback to SimpleHTTPRequestHandler to serve local files
         super().do_GET()
 
     def do_POST(self):
+        if self.path == '/api/cli_analyze':
+            # Run analysis through the local Claude Code CLI (uses the user's
+            # subscription — no API key in the browser, no Gemini rate limits).
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length) or b'{}')
+            except Exception:
+                payload = {}
+            prompt = (payload.get('prompt') or '').strip()
+            system = (payload.get('system') or '').strip()
+            fast = bool(payload.get('fast', False))
+
+            if not prompt:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Missing prompt"}).encode('utf-8'))
+                return
+            if not (CLAUDE_BIN and os.path.exists(CLAUDE_BIN)):
+                self.send_response(503)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Claude CLI not found on server"}).encode('utf-8'))
+                return
+
+            cmd = [CLAUDE_BIN, '-p', '--output-format', 'text',
+                   '--model', 'haiku' if fast else 'sonnet',
+                   '--disallowedTools', 'Bash', 'Edit', 'Write', 'Read', 'WebFetch', 'WebSearch', 'Task']
+            if system:
+                cmd += ['--append-system-prompt', system]
+            try:
+                result = subprocess.run(cmd, input=prompt, capture_output=True,
+                                        text=True, timeout=180)
+                if result.returncode != 0:
+                    self.send_response(500)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": (result.stderr or 'CLI error').strip()[:500]}).encode('utf-8'))
+                    return
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"text": result.stdout.strip()}).encode('utf-8'))
+            except subprocess.TimeoutExpired:
+                self.send_response(504)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Claude CLI timed out"}).encode('utf-8'))
+            return
+
         if self.path == '/api/sync_note':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)

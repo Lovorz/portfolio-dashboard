@@ -18,7 +18,9 @@
 * [[01_WealthRoadmap_FULL]]
 
 ### 📂 Facebook Posts
+* [[Constellation_Energy]]
 * [[CoreWeave]]
+* [[Dow_and_Nasdaq]]
 
 ### 📂 Fundamentals
 * [[002_อ่านงบการเงิน101]]

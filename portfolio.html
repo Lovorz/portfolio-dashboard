@@ -1468,10 +1468,22 @@
     </div>
 
     <div class="col-6 glass-card">
-      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
         <span><i class="fa-solid fa-satellite-dish"></i> Stock News Intelligence</span>
-        <button onclick="toggleFmpKeySection()" style="background:transparent;border:1px solid var(--card-border);color:var(--text-muted);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.73rem;line-height:1.6;">⚙️ FMP Key</button>
+        <div style="display:flex;gap:5px;">
+          <button onclick="toggleNewsApiKeySection()" style="background:transparent;border:1px solid var(--card-border);color:var(--text-muted);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.73rem;line-height:1.6;">⚙️ AI Key</button>
+          <button onclick="toggleFmpKeySection()" style="background:transparent;border:1px solid var(--card-border);color:var(--text-muted);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.73rem;line-height:1.6;">⚙️ FMP Key</button>
+        </div>
       </h3>
+
+      <div id="news-api-key-section" style="display:none;margin-bottom:10px;padding:10px;background:rgba(0,0,0,0.2);border:1px solid var(--card-border);border-radius:8px;">
+        <p style="font-size:0.73rem;color:var(--text-muted);margin:0 0 6px 0;">Claude หรือ Gemini API Key — เก็บใน localStorage ร่วมกับ Q&A</p>
+        <div style="display:flex;gap:6px;">
+          <input type="password" id="news-claude-api-key" class="form-control" placeholder="sk-ant-... (Claude) หรือ AIza... (Gemini)" style="flex:1;font-size:0.8rem;padding:6px 10px;" />
+          <button class="btn" onclick="saveNewsApiKey()" style="padding:6px 12px;font-size:0.8rem;white-space:nowrap;">บันทึก</button>
+        </div>
+        <p id="news-api-key-status" style="font-size:0.73rem;margin:5px 0 0;display:none;"></p>
+      </div>
 
       <div id="fmp-key-section" style="display:none;margin-bottom:10px;padding:10px;background:rgba(0,0,0,0.2);border:1px solid var(--card-border);border-radius:8px;">
         <p style="font-size:0.73rem;color:var(--text-muted);margin:0 0 6px 0;">Financial Modeling Prep API Key — <a href="https://financialmodelingprep.com/developer/docs" target="_blank" style="color:var(--accent);">fmp docs</a></p>
@@ -1510,6 +1522,25 @@
         <div class="analyzer-result" id="news-analysis-result" style="display:none;max-height:260px;overflow-y:auto;">
           <!-- News analysis results display here -->
         </div>
+      </div>
+    </div>
+
+    <!-- RichieGem-style batch report over the whole watchlist -->
+    <div class="col-12 glass-card">
+      <h3 class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span><i class="fa-solid fa-cat"></i> RichieGem รายงานรวม Watchlist</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.68rem;color:var(--text-muted);">Engine: <strong style="color:var(--accent-secondary);">Claude CLI</strong> (Gemma เป็น fallback)</span>
+          <button class="btn btn-primary" id="richiegem-run-btn" onclick="runRichieGemReport()" style="padding:6px 14px;font-size:0.82rem;white-space:nowrap;">
+            <i class="fa-solid fa-bolt"></i> สร้างรายงาน
+          </button>
+        </div>
+      </h3>
+      <p style="font-size:0.74rem;color:var(--text-muted);margin:0 0 10px;">
+        ไล่วิเคราะห์ข่าวล่าสุดของหุ้นทุกตัวใน Watchlist สไตล์ Meme/Guru (Sentiment + ประเด็นเด่น + ควรเข้า/ถือ/หนี) — เหมือนรายงานอัตโนมัติของบอท RichieGem
+      </p>
+      <div id="richiegem-report" style="display:none;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
+        <!-- Per-ticker report cards render here -->
       </div>
     </div>
   </div>
@@ -1732,6 +1763,12 @@
     }
     function getAnyApiKey() {
       return getClaudeApiKey() || getGeminiApiKey();
+    }
+
+    // Any usable AI backend? A key, OR the local Claude CLI (until proven unavailable).
+    // _cliStatus (declared in the AI section) is initialized before any handler runs.
+    function aiAvailable() {
+      return !!getAnyApiKey() || _cliStatus !== false;
     }
 
     // System variables and database store
@@ -2278,23 +2315,38 @@
                         {
                                     "name": "Dime! กองทุนและหุ้นต่างประเทศ",
                                     "handle": "@dimeinvestment",
-                                    "channelId": "",
                                     "emoji": "💰",
                                     "color": "#10b981"
                         },
                         {
                                     "name": "Money Buffalo",
                                     "handle": "@moneybuffalo",
-                                    "channelId": "",
                                     "emoji": "🐂",
                                     "color": "#f59e0b"
                         },
                         {
                                     "name": "The Standard Wealth",
                                     "handle": "@thestandardwealth",
-                                    "channelId": "",
                                     "emoji": "📰",
                                     "color": "#ef4444"
+                        },
+                        {
+                                    "name": "พี่เบิร์ด PRB Playbook",
+                                    "link": "https://www.facebook.com/prberd",
+                                    "emoji": "📘",
+                                    "color": "#1877f2"
+                        },
+                        {
+                                    "name": "Earthh Evans",
+                                    "link": "https://www.facebook.com/earthh.evans.2025",
+                                    "emoji": "🤵",
+                                    "color": "#1877f2"
+                        },
+                        {
+                                    "name": "Beauty Investor",
+                                    "link": "https://www.facebook.com/BeautyInvestor",
+                                    "emoji": "💄",
+                                    "color": "#1877f2"
                         }
             ],
             "investor_profile": {
@@ -3322,18 +3374,19 @@
     // Render Youtube feeds
     function renderResourceFeeds() {
       const feedList = document.getElementById('youtube-feed-list');
+      if (!feedList) return;
       feedList.innerHTML = '';
 
       portfolioData.yt_channels.forEach(ch => {
         const a = document.createElement('a');
-        a.href = `https://www.youtube.com/${ch.handle}`;
+        a.href = ch.link || `https://www.youtube.com/${ch.handle}`;
         a.target = "_blank";
         a.className = "feed-item";
         a.innerHTML = `
           <div class="feed-emoji" style="color: ${ch.color};">${ch.emoji}</div>
           <div class="feed-details">
             <h4>${ch.name}</h4>
-            <span>Handle: ${ch.handle} · คลิปวีดีโอวิเคราะห์อัปเดตล่าสุด</span>
+            <span>${ch.link ? 'Facebook Page · ข้อมูลวิเคราะห์อัปเดตล่าสุด' : 'Handle: ' + ch.handle + ' · คลิปวีดีโอวิเคราะห์อัปเดตล่าสุด'}</span>
           </div>
         `;
         feedList.appendChild(a);
@@ -4041,12 +4094,23 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         localStorage.removeItem('gemini_api_key');
         status.style.color = 'var(--green)';
         status.textContent = '✓ บันทึก Claude API Key แล้ว — พร้อมใช้งาน';
+        
+        // Sync news tab key
+        const newsInput = document.getElementById('news-claude-api-key');
+        if (newsInput) newsInput.value = key;
+
         setTimeout(() => { document.getElementById('api-key-section').style.display = 'none'; }, 1500);
       } else if (key.startsWith('AIza')) {
         localStorage.setItem('gemini_api_key', key);
         localStorage.removeItem('anthropic_api_key');
+        _geminiModelsCache = null; // new key may expose different models — re-discover
         status.style.color = 'var(--green)';
         status.textContent = '✓ บันทึก Gemini API Key แล้ว — พร้อมใช้งาน';
+
+        // Sync news tab key
+        const newsInput = document.getElementById('news-claude-api-key');
+        if (newsInput) newsInput.value = key;
+
         setTimeout(() => { document.getElementById('api-key-section').style.display = 'none'; }, 1500);
       } else {
         status.style.color = 'var(--red)';
@@ -4054,13 +4118,116 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
       }
     }
 
+    function toggleNewsApiKeySection() {
+      const sec = document.getElementById('news-api-key-section');
+      if (!sec) return;
+      sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+      if (sec.style.display === 'block') {
+        const saved = getClaudeApiKey() || getGeminiApiKey() || '';
+        document.getElementById('news-claude-api-key').value = saved;
+      }
+    }
+
+    function saveNewsApiKey() {
+      const key = document.getElementById('news-claude-api-key').value.trim();
+      const status = document.getElementById('news-api-key-status');
+      if (!status) return;
+      status.style.display = 'block';
+      if (key.startsWith('sk-ant-')) {
+        localStorage.setItem('anthropic_api_key', key);
+        localStorage.removeItem('gemini_api_key');
+        status.style.color = 'var(--green)';
+        status.textContent = '✓ บันทึก Claude API Key แล้ว';
+        
+        // Sync main tab key
+        const mainInput = document.getElementById('claude-api-key');
+        if (mainInput) mainInput.value = key;
+
+        setTimeout(() => { document.getElementById('news-api-key-section').style.display = 'none'; }, 1500);
+      } else if (key.startsWith('AIza')) {
+        localStorage.setItem('gemini_api_key', key);
+        localStorage.removeItem('anthropic_api_key');
+        _geminiModelsCache = null; // new key may expose different models — re-discover
+        status.style.color = 'var(--green)';
+        status.textContent = '✓ บันทึก Gemini API Key แล้ว';
+
+        // Sync main tab key
+        const mainInput = document.getElementById('claude-api-key');
+        if (mainInput) mainInput.value = key;
+
+        setTimeout(() => { document.getElementById('news-api-key-section').style.display = 'none'; }, 1500);
+      } else {
+        status.style.color = 'var(--red)';
+        status.textContent = '⚠️ Key ไม่ถูกต้อง — ต้องขึ้นต้นด้วย sk-ant- (Claude) หรือ AIza (Gemini)';
+      }
+    }
+
     // Unified AI caller — Claude first, Gemini fallback
-    async function callAI({ system, messages, maxTokens = 1024, fast = false }) {
+    // Backend availability cache for the session.
+    let _cliStatus = null;          // null=unknown, true=available, false=unavailable
+    let _geminiModelsCache = null;  // discovered model IDs supporting generateContent
+    let _lastAIBackend = '';        // for UI labels
+    let _lastAIModel = '';          // exact model string that produced the last response
+
+    // Route analysis through the local Claude Code CLI (server.py /api/cli_analyze).
+    // Uses the user's Claude subscription — no API key in the browser, no Gemini rate limits.
+    async function callClaudeCLI({ system, messages, fast }) {
+      const flat = messages.map(m => {
+        const t = typeof m.content === 'string' ? m.content : (m.content||[]).map(c=>c.text||'').join('');
+        return messages.length > 1 ? `${m.role === 'assistant' ? 'ASSISTANT' : 'USER'}: ${t}` : t;
+      }).join('\n\n');
+      let resp;
+      try {
+        resp = await fetch('/api/cli_analyze', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ prompt: flat, system: system || '', fast: !!fast })
+        });
+      } catch (e) {
+        const err = new Error('local server ไม่ตอบสนอง (server.py ไม่ได้รัน?)'); err.unavailable = true; throw err;
+      }
+      if (resp.status === 503) { const err = new Error('ไม่พบ Claude CLI บน server'); err.unavailable = true; throw err; }
+      if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error || `CLI ${resp.status}`); }
+      const d = await resp.json();
+      if (!d.text) throw new Error('CLI ตอบกลับว่าง');
+      return d.text;
+    }
+
+    // Discover Gemini models this key can actually call (IDs drift across versions).
+    async function _discoverGeminiModels(key) {
+      if (_geminiModelsCache) return _geminiModelsCache;
+      try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const d = await r.json();
+        _geminiModelsCache = (d.models||[])
+          .filter(m => (m.supportedGenerationMethods||[]).includes('generateContent'))
+          .map(m => m.name.replace(/^models\//,''));
+      } catch { _geminiModelsCache = []; }
+      return _geminiModelsCache;
+    }
+
+    // RPD-ranked preference (from the user's rate-limit dashboard):
+    // 3.1-flash-lite = 500/day, gemma-4 = 1500/day, 2.5/3.5-flash = 20/day.
+    function _rankGeminiModels(available, fast) {
+      const prefs = fast
+        ? [/gemini-3\.1-flash-lite/, /gemma-4-26b/, /gemma-4-31b/, /gemini-2\.5-flash-lite/, /gemini-2\.5-flash$/, /gemini-3\.5-flash/]
+        : [/gemini-3\.1-flash-lite/, /gemini-2\.5-flash$/, /gemini-3\.5-flash/, /gemma-4-31b/];
+      const picked = [];
+      for (const re of prefs) {
+        const m = available.find(a => re.test(a) && !picked.includes(a));
+        if (m) picked.push(m);
+      }
+      if (!picked.length) picked.push(...available.filter(a => /flash|gemma/.test(a)).slice(0, 3));
+      return picked;
+    }
+
+    async function callAI({ system, messages, maxTokens = 1024, fast = false, geminiModelPattern = null, forceGemini = false }) {
       const claudeKey = getClaudeApiKey();
       const geminiKey = getGeminiApiKey();
-      if (!claudeKey && !geminiKey) throw new Error('NO_KEY');
 
-      if (claudeKey) {
+      // 1. Claude API key (explicit) — fastest, highest quality. (skipped when forceGemini)
+      if (claudeKey && !forceGemini) {
+        _lastAIBackend = 'Claude';
         const model = fast ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
         const resp = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
@@ -4069,24 +4236,95 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         });
         if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message || `Claude ${resp.status}`); }
         const d = await resp.json();
+        _lastAIModel = model;
         return d.content[0].text;
-      } else {
-        const model = fast ? 'gemini-2.0-flash' : 'gemini-2.5-flash';
-        const contents = messages.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: typeof m.content === 'string' ? m.content : (m.content||[]).map(c=>c.text||'').join('') }]
-        }));
-        const body = { contents, generationConfig: { maxOutputTokens: maxTokens } };
-        if (system) body.system_instruction = { parts: [{ text: system }] };
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
-          method: 'POST',
-          headers: { 'content-type':'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message || `Gemini ${resp.status}`); }
-        const d = await resp.json();
-        return d.candidates[0].content.parts[0].text;
       }
+
+      // 2. Claude CLI via local server — no key, uses subscription, no rate limits. (skipped when forceGemini)
+      if (!forceGemini && _cliStatus !== false) {
+        try {
+          const text = await callClaudeCLI({ system, messages, fast });
+          _cliStatus = true; _lastAIBackend = 'Claude CLI'; _lastAIModel = 'claude-cli:' + (fast ? 'haiku' : 'sonnet');
+          return text;
+        } catch (err) {
+          if (err.unavailable) { _cliStatus = false; console.warn('Claude CLI unavailable → fallback.', err.message); }
+          else { console.warn('Claude CLI error → fallback.', err.message); }
+          if (!geminiKey) throw err; // nothing else to try
+        }
+      }
+
+      // 3. Gemini API key — runtime-discovered, RPD-ranked, cross-bucket cascade.
+      if (geminiKey) {
+        _lastAIBackend = 'Gemini';
+        const available = await _discoverGeminiModels(geminiKey);
+        let modelsToTry = available.length
+          ? _rankGeminiModels(available, fast)
+          : (fast ? ['gemini-2.5-flash-lite', 'gemini-2.5-flash'] : ['gemini-2.5-flash']);
+        // Optional override (e.g. RichieGem forces Gemma for its high daily quota).
+        if (geminiModelPattern) {
+          const matched = available.filter(m => geminiModelPattern.test(m));
+          if (matched.length) modelsToTry = matched;
+        }
+        console.log('Gemini models to try (RPD-ranked):', modelsToTry);
+
+        let lastError = null;
+        for (const model of modelsToTry) {
+          try {
+            const isGemma = /^gemma/.test(model);
+            let contents = messages.map(m => ({
+              role: m.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: typeof m.content === 'string' ? m.content : (m.content||[]).map(c=>c.text||'').join('') }]
+            }));
+            const body = { contents, generationConfig: { maxOutputTokens: maxTokens } };
+            if (!isGemma) {
+              body.safetySettings = [
+                { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' }
+              ];
+              if (system) body.system_instruction = { parts: [{ text: system }] };
+            } else if (system) {
+              // Gemma has no system_instruction — fold it into the first user turn.
+              contents[0] = { role: 'user', parts: [{ text: system + '\n\n' + (contents[0]?.parts[0]?.text || '') }] };
+              body.contents = contents;
+            }
+
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
+              method: 'POST', headers: { 'content-type':'application/json' }, body: JSON.stringify(body)
+            });
+
+            if (resp.ok) {
+              const d = await resp.json();
+              const cand = d.candidates && d.candidates[0];
+              const finish = cand?.finishReason;
+              const text = cand?.content?.parts?.[0]?.text;
+              if (text && (finish === 'STOP' || finish === 'MAX_TOKENS' || !finish)) { _lastAIModel = model; return text; }
+              if (finish === 'RECITATION') throw new Error(`Gemini หยุดเพราะคัดลอกข้อความตรงๆ (RECITATION) — ${model}`);
+              if (finish === 'SAFETY') throw new Error(`Gemini บล็อกด้วย safety filter — ${model}`);
+              throw new Error(`Empty response from ${model}${finish ? ` (finishReason: ${finish})` : ''}`);
+            }
+
+            const e = await resp.json().catch(() => ({}));
+            // 429 quota is per-model bucket — try the next model, which may have its own budget.
+            if (resp.status === 429 || e.error?.status === 'RESOURCE_EXHAUSTED') {
+              lastError = new Error(`GEMINI_QUOTA:เกินโควต้ารายวันของ Gemini (${model}) — เพิ่ม Claude key หรือใช้ Claude CLI เพื่อเลี่ยงลิมิต`);
+              console.warn(`Gemini ${model} quota exhausted → next bucket...`);
+              continue;
+            }
+            lastError = new Error(`${model}: ${e.error?.message || `HTTP ${resp.status}`}`);
+            console.warn(`Gemini ${model} failed → fallback.`, lastError.message);
+          } catch (err) {
+            if (/RECITATION|safety filter/.test(err.message)) throw err; // content issue, terminal
+            lastError = err;
+            console.warn(`Gemini ${model} error → fallback.`, err.message);
+          }
+        }
+        throw new Error(lastError ? lastError.message : 'ทุกรุ่นของ Gemini ใช้งานไม่ได้');
+      }
+
+      throw new Error('NO_KEY');
     }
 
     function sendRiskQuestion() {
@@ -4106,12 +4344,11 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
       history.appendChild(userBubble);
       history.scrollTop = history.scrollHeight;
 
-      const hasKey = getAnyApiKey();
-      if (!hasKey) {
+      if (!aiAvailable()) {
         document.getElementById('api-key-section').style.display = 'block';
         const errBubble = document.createElement('div');
         errBubble.className = 'chat-bubble bubble-assistant';
-        errBubble.innerHTML = '⚠️ กรุณาตั้งค่า Claude หรือ Gemini API Key ก่อน (กด ⚙️ API Key ด้านบน)';
+        errBubble.innerHTML = '⚠️ ต้องมี AI backend สักอย่าง: ตั้งค่า Claude/Gemini API Key (กด ⚙️ API Key) หรือรัน <code>server.py</code> เพื่อใช้ Claude CLI';
         history.appendChild(errBubble);
         history.scrollTop = history.scrollHeight;
         return;
@@ -4150,7 +4387,7 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         loadingBubble.innerHTML = processedReply;
 
       } catch (err) {
-        loadingBubble.innerHTML = `<span style="color:var(--red);">❌ Error: ${err.message}</span>`;
+        loadingBubble.innerHTML = `<span style="color:var(--red);">❌ Error: ${err.message.replace(/^GEMINI_QUOTA:/,'')}</span>`;
         riskChatHistory.pop();
       }
 
@@ -4204,13 +4441,44 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
     async function fetchFmpNews(ticker) {
       const key = localStorage.getItem('fmp_api_key');
       if (!key) return null; // no key = skip silently, fall through to Yahoo
-      const url = `https://financialmodelingprep.com/api/v3/stock_news?tickers=${encodeURIComponent(ticker)}&limit=10&apikey=${key}`;
+      
+      // server.py /api/fmp_news pages through FMP's free /stable/fmp-articles feed
+      // and filters by ticker server-side (avoids browser CORS), returning normalized
+      // articles: {title, publishedDate, site, text, url, relatedTickers}.
+      const localProxyUrl = `/api/fmp_news?ticker=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(key)}`;
       try {
-        const resp = await fetch(url);
+        const resp = await fetch(localProxyUrl);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (Array.isArray(data)) {
+            console.log(`✓ FMP via local proxy — ${data.length} article(s) for ${ticker}`);
+            return data.length ? data : null; // empty = no FMP article mentions ticker → fall to Yahoo
+          }
+          if (data && data.error) console.warn("FMP proxy error:", data.error);
+        }
+      } catch (err) {
+        console.warn("FMP local proxy unreachable (is server.py running?) — falling back to Yahoo.", err);
+      }
+
+      // Best-effort direct call (usually CORS-blocked in the browser; server proxy is the supported path).
+      try {
+        const directUrl = `https://financialmodelingprep.com/stable/fmp-articles?page=0&limit=50&apikey=${encodeURIComponent(key)}`;
+        const resp = await fetch(directUrl);
         if (!resp.ok) return null;
-        const data = await resp.json();
-        if (data['Error Message'] || !Array.isArray(data)) return null;
-        return data.length ? data : null;
+        const articles = await resp.json();
+        if (!Array.isArray(articles)) return null;
+        const up = ticker.toUpperCase();
+        const matched = articles.filter(it =>
+          ((it.tickers||'').toUpperCase().includes(up)) || ((it.title||'').toUpperCase().includes(up))
+        ).map(it => ({
+          title: it.title || '',
+          publishedDate: it.date || '',
+          site: it.site || it.publisher || 'FMP',
+          text: (it.content || '').replace(/<[^>]+>/g, '').slice(0, 600),
+          url: it.link || '#',
+          relatedTickers: (it.tickers || '').split(',').map(t => t.split(':').pop().trim().toUpperCase()).filter(Boolean)
+        }));
+        return matched.length ? matched : null;
       } catch { return null; }
     }
 
@@ -4235,8 +4503,21 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         publishedDate: new Date(n.providerPublishTime * 1000).toLocaleDateString('th-TH'),
         site: n.publisher,
         text: n.title,
-        url: n.link || '#'
+        url: n.link || '#',
+        relatedTickers: n.relatedTickers || []
       }));
+    }
+
+    // Classify how focused an article is on the queried ticker, using relatedTickers.
+    // Lower score = more relevant. scope is shown in UI + fed to the AI.
+    function _articleRelevance(a, ticker) {
+      const rt = (a.relatedTickers || []).map(t => (t || '').toUpperCase());
+      if (!rt.length) return { scope: 'general', label: 'ทั่วไป', score: 6 };
+      const idx = rt.indexOf(ticker);
+      if (idx === -1) return { scope: 'general', label: 'ทั่วไป', score: 7 };
+      if (rt.length === 1) return { scope: 'focused', label: `เจาะ ${ticker}`, score: 0 };
+      if (rt.length <= 3) return { scope: idx === 0 ? 'primary' : 'comparison', label: idx === 0 ? `หลัก ${ticker}` : 'เปรียบเทียบ', score: 1 + idx };
+      return { scope: 'roundup', label: `รวม ${rt.length} หุ้น`, score: 10 + rt.length };
     }
 
     function _showNewsResult(html) {
@@ -4255,6 +4536,13 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         .replace(/\n/g,'<br>');
     }
 
+    // Some models (esp. Gemma) dump a planning/self-check scratchpad before the answer.
+    // Keep only from the first real "## " heading onward.
+    function _stripThinking(t) {
+      const i = (t || '').indexOf('## ');
+      return i > 0 ? t.slice(i) : (t || '');
+    }
+
     async function analyzeStockNews() {
       const ticker = document.getElementById('news-ticker-input').value.trim().toUpperCase();
       if (!ticker) return;
@@ -4271,49 +4559,71 @@ VOICE: Thai-English Mix แบบ Memo ของ Institutional Risk Desk
         return;
       }
 
-      // 2. Build news text for AI + link list
+      // 2. Score relevance & rank (most ticker-focused first).
+      //    Normalize FMP articles (single `symbol`) into the relatedTickers shape.
+      articles.forEach(a => {
+        if (!a.relatedTickers) a.relatedTickers = a.symbol ? [a.symbol] : [];
+        a._rel = _articleRelevance(a, ticker);
+      });
+      articles.sort((x, y) => x._rel.score - y._rel.score);
+
+      const focusedCount = articles.filter(a => a._rel.score <= 2).length;
+      const thinSignal = focusedCount === 0; // only roundups/sector/general mention the ticker
+
+      // Build news text for AI — tag each item with its scope so the model can weight it
       const newsText = articles.slice(0, 8).map(a =>
-        `หัวข้อ: ${a.title}\nวันที่: ${a.publishedDate}\nแหล่ง: ${a.site}\n${(a.text||'').slice(0,400)}`
+        `[${a._rel.scope.toUpperCase()}] หัวข้อ: ${a.title}\nวันที่: ${a.publishedDate}\nแหล่ง: ${a.site}\nหุ้นที่เกี่ยวข้อง: ${(a.relatedTickers||[]).join(', ')||'—'}\n${(a.text||'').slice(0,400)}`
       ).join('\n\n---\n\n');
-      const newsLinks = articles.slice(0,5).map(a =>
-        `• <a href="${a.url}" target="_blank" style="color:var(--accent);text-decoration:none;">${(a.title||'').slice(0,70)}${(a.title||'').length>70?'…':''}</a>`
+
+      const _scopeColor = s => s==='focused'||s==='primary' ? 'var(--green)' : s==='comparison' ? 'var(--yellow)' : 'var(--text-muted)';
+      const newsLinks = articles.slice(0,6).map(a =>
+        `• <a href="${a.url}" target="_blank" style="color:var(--accent);text-decoration:none;">${(a.title||'').slice(0,68)}${(a.title||'').length>68?'…':''}</a> <span style="font-size:0.65rem;color:${_scopeColor(a._rel.scope)};">[${a._rel.label}]</span>`
       );
 
       const inPort  = (portfolioData.dime_assets||[]).find(a => a.t === ticker);
       const inWatch = (portfolioData.ideas||[]).find(id => id.t === ticker);
       const canAdd  = !inPort && !inWatch;
 
-      // 3. If no AI key → show headlines only
-      const apiKey = getAnyApiKey();
-      if (!apiKey) {
+      // 3. No AI backend at all → show headlines only
+      if (!aiAvailable()) {
         _showNewsResult(`
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <strong style="color:var(--accent-secondary);font-size:0.85rem;">${ticker} · ข่าวล่าสุด (${source})</strong>
             ${canAdd ? `<button class="btn" id="add-watch-btn-${ticker}" onclick="quickAddToWatchlist('${ticker}')" style="padding:3px 10px;font-size:0.72rem;color:var(--yellow);border-color:var(--yellow);">+ Watchlist</button>` : ''}
           </div>
           <div style="font-size:0.78rem;line-height:1.7;margin-bottom:8px;">${newsLinks.join('<br>')}</div>
-          <p style="font-size:0.73rem;color:var(--text-muted);">💡 ตั้งค่า Claude หรือ Gemini API Key ในวิดเจ็ต Risk Manager เพื่อรับการวิเคราะห์ AI</p>
+          <p style="font-size:0.73rem;color:var(--text-muted);">💡 ตั้งค่า API Key หรือรัน <code>server.py</code> เพื่อใช้ Claude CLI วิเคราะห์ข่าว</p>
         `);
         return;
       }
 
       // 4. Analyze with AI
-      const aiLabel = getClaudeApiKey() ? 'Claude' : 'Gemini';
-      _showNewsResult(`<span style="opacity:0.6;font-size:0.8rem;">⏳ วิเคราะห์ด้วย ${aiLabel} AI (${source})...</span>`);
+      const aiLabel = getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini');
+      _showNewsResult(`<span style="opacity:0.6;font-size:0.8rem;">⏳ วิเคราะห์ด้วย ${aiLabel} (${source})...</span>`);
 
-      const prompt = `คุณคือนักวิเคราะห์การลงทุนระดับ Institutional วิเคราะห์ข่าวของ ${ticker} เป็นภาษาไทย (Thai-English mix):
-${inPort ? `\n⚠️ ผู้ใช้ถือ ${ticker}: ${inPort.shares.toFixed(4)} shares, Cost $${inPort.cost.toFixed(2)}/share, P/L ${inPort.pct?.toFixed(1)||'?'}%\n` : ''}
-ข่าวล่าสุด:
+      const prompt = `คุณคือนักวิเคราะห์การลงทุนระดับสถาบัน วิเคราะห์ข่าวของหุ้น ${ticker}
+
+กฎสำคัญ:
+1. เขียนด้วยสำนวนของคุณเองทั้งหมด ห้ามคัดลอกหัวข้อข่าวหรือประโยคจากต้นฉบับตรงๆ ให้เรียบเรียงใหม่เสมอ (การคัดลอกคำต่อคำทำให้คำตอบถูกบล็อกและตัดทอน)
+2. ข่าวแต่ละชิ้นมี scope กำกับ: FOCUSED/PRIMARY = เป็นข่าวของ ${ticker} จริงๆ; COMPARISON = ${ticker} เป็นหนึ่งในไม่กี่ตัว; ROUNDUP/GENERAL = ${ticker} ถูกเอ่ยถึงผ่านๆ ปนกับหุ้นอื่นจำนวนมาก
+3. ตัดสิน Sentiment และคำแนะนำจากข่าว FOCUSED/PRIMARY เท่านั้น ส่วน COMPARISON/ROUNDUP ให้ถือเป็นบริบทของกลุ่มอุตสาหกรรม ไม่ใช่สัญญาณของ ${ticker} โดยตรง
+4. ถ้าไม่มีข่าว FOCUSED/PRIMARY เลย (มีแต่ข่าวรวม/ข่าวกลุ่ม) ให้บอกตรงๆ ว่าตอนนี้แทบไม่มีข่าวเจาะจง ${ticker} และให้ความเชื่อมั่นต่ำ
+
+${inPort ? `หมายเหตุ: ผู้ใช้ถือ ${ticker} อยู่ — ${inPort.shares.toFixed(4)} หุ้น, ต้นทุน $${inPort.cost.toFixed(2)}/หุ้น, P/L ปัจจุบัน ${inPort.pct?.toFixed(1)||'?'}%\n` : ''}${thinSignal ? `\nสำคัญ: ข่าวด้านล่างไม่มีชิ้นไหนเจาะจง ${ticker} เลย เป็นข่าวกลุ่ม/ข่าวรวม โปรดสะท้อนเรื่องนี้และลดความเชื่อมั่น\n` : ''}
+รายการข่าว (มี scope กำกับ):
 ${newsText}
 
-## Sentiment: [🟢 Bullish / 🔴 Bearish / 🟡 Neutral]
-## ประเด็นสำคัญ (3-5 ข้อ)
+ตอบเป็นภาษาไทย เรียบเรียงใหม่ทั้งหมด ตามรูปแบบนี้:
+## Sentiment: [🟢 Bullish / 🔴 Bearish / 🟡 Neutral] — พร้อมระดับความเชื่อมั่น (สูง/กลาง/ต่ำ)
+## ความเกี่ยวข้องของข่าว
+หนึ่งบรรทัด: มีข่าวเจาะจง ${ticker} จริงไหม หรือเป็นแค่ข่าวกลุ่ม/ข่าวรวม
+## ประเด็นสำคัญ (3-5 ข้อ สำนวนของคุณเอง)
 - ...
-## ผลกระทบต่อ${inPort?'Position ที่ถือ':'นักลงทุน'}
+## ผลกระทบต่อ${inPort ? 'พอร์ตที่ถืออยู่' : 'นักลงทุน'}
 ...
 ## คำแนะนำ
-[Add Watchlist / ถือต่อ / Trim / ไม่ทำอะไร] — เหตุผล 1-2 ประโยค
-## โซนเข้าซื้อที่น่าสนใจ
+[เพิ่มใน Watchlist / ถือต่อ / ลดพอร์ต / ยังไม่ทำอะไร] — เหตุผล 1-2 ประโยค
+## โซนราคาน่าเข้าซื้อ
 $xxx–$xxx (หรือ N/A)`;
 
       try {
@@ -4335,7 +4645,7 @@ $xxx–$xxx (หรือ N/A)`;
             ${canAdd ? `<button class="btn" id="add-watch-btn-${ticker}" onclick="quickAddToWatchlist('${ticker}')" style="padding:3px 10px;font-size:0.72rem;color:var(--yellow);border-color:var(--yellow);">+ Watchlist</button>` : ''}
           </div>
           <div style="font-size:0.78rem;line-height:1.7;margin-bottom:8px;">${newsLinks.join('<br>')}</div>
-          <p style="font-size:0.73rem;color:var(--red);">⚠️ AI Analysis Error: ${err.message}. แสดงรายการข่าวเด่นแบบธรรมดาแทน</p>
+          <p style="font-size:0.73rem;color:var(--red);">⚠️ ${err.message.replace(/^GEMINI_QUOTA:/,'')}. แสดงรายการข่าวเด่นแบบธรรมดาแทน</p>
         `);
       }
     }
@@ -4343,22 +4653,119 @@ $xxx–$xxx (หรือ N/A)`;
     async function analyzePastedText() {
       const text = document.getElementById('news-paste-text').value.trim();
       if (!text) return;
-      if (!getAnyApiKey()) {
-        _showNewsResult('⚠️ กรุณาตั้งค่า Claude หรือ Gemini API Key ในวิดเจ็ต Risk Manager ก่อน');
+      if (!aiAvailable()) {
+        _showNewsResult('⚠️ ต้องมี AI backend: ตั้งค่า API Key หรือรัน server.py เพื่อใช้ Claude CLI');
         return;
       }
       _showNewsResult(`<span style="opacity:0.6;font-size:0.8rem;">⏳ กำลังวิเคราะห์...</span>`);
       try {
         const result = await callAI({
           system: null,
-          messages: [{ role: 'user', content: `คุณคือนักวิเคราะห์การลงทุน สกัดข้อมูลจากข้อความนี้เป็นภาษาไทย:\n\n"${text.slice(0,3000)}"\n\nตอบ:\n## Ticker ที่พบ\n## Sentiment: 🟢/🔴/🟡\n## ประเด็นสำคัญ (3-5 ข้อ)\n## โซนราคา (ถ้ามี)\n## ควรเพิ่มใน Watchlist ไหม?` }],
+          messages: [{ role: 'user', content: `คุณคือนักวิเคราะห์การลงทุน อ่านข้อความด้านล่างแล้ววิเคราะห์เป็นภาษาไทย
+
+สำคัญ: เขียนด้วยสำนวนของคุณเองทั้งหมด ห้ามคัดลอกประโยคจากต้นฉบับตรงๆ ให้เรียบเรียงใหม่เสมอ (การคัดลอกคำต่อคำทำให้คำตอบถูกบล็อกและตัดทอน)
+
+ข้อความ:
+"${text.slice(0,3000)}"
+
+ตอบเป็นภาษาไทย เรียบเรียงใหม่ทั้งหมด ตามรูปแบบนี้:
+## หุ้นที่พบ (Ticker)
+## Sentiment: 🟢/🔴/🟡 — พร้อมระดับความเชื่อมั่น (สูง/กลาง/ต่ำ)
+## ประเด็นสำคัญ (3-5 ข้อ สำนวนของคุณเอง)
+- ...
+## โซนราคา (ถ้ามี)
+## ควรเพิ่มใน Watchlist ไหม?` }],
           maxTokens: 1024,
           fast: true
         });
         _showNewsResult(`<div style="font-size:0.8rem;line-height:1.75;">${_aiMarkdown(result)}</div>`);
       } catch(err) {
-        _showNewsResult(`<span style="color:var(--red);">❌ ${err.message}</span>`);
+        _showNewsResult(`<span style="color:var(--red);">❌ ${err.message.replace(/^GEMINI_QUOTA:/,'')}</span>`);
       }
+    }
+
+    // RichieGem-style batch report: loop the whole watchlist, Meme/Guru persona.
+    // Uses normal backend priority, but forces Gemma on the Gemini path (high daily quota).
+    async function runRichieGemReport() {
+      const btn = document.getElementById('richiegem-run-btn');
+      const box = document.getElementById('richiegem-report');
+      const tickers = [...new Set((portfolioData.ideas||[]).map(i => (i.t||'').toUpperCase()).filter(Boolean))];
+
+      box.style.display = 'flex';
+      if (!tickers.length) { box.innerHTML = '<p style="font-size:0.8rem;color:var(--text-muted);">Watchlist ว่าง — เพิ่มหุ้นในแท็บ กลยุทธ์ & Watchlist ก่อน</p>'; return; }
+      if (!aiAvailable()) { box.innerHTML = '<p style="font-size:0.8rem;color:var(--red);">ต้องมี AI backend: ตั้งค่า API Key หรือรัน server.py เพื่อใช้ Claude CLI</p>'; return; }
+
+      btn.disabled = true;
+      const btnHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง...';
+      box.innerHTML = '';
+
+      const backend = getClaudeApiKey() ? 'Claude' : (_cliStatus !== false ? 'Claude CLI' : 'Gemini (Gemma)');
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:0.72rem;color:var(--text-muted);';
+      header.textContent = `รายงาน ${tickers.length} ตัว · ${new Date().toLocaleString('th-TH')} · ${backend}`;
+      box.appendChild(header);
+
+      for (const ticker of tickers) {
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.cssText = 'padding:10px 12px;background:rgba(0,0,0,0.15);';
+        card.innerHTML = `<strong style="color:var(--accent-secondary);">${ticker}</strong> <span style="opacity:0.6;font-size:0.78rem;">⏳ ดึงข่าว & วิเคราะห์...</span>`;
+        box.appendChild(card);
+
+        try {
+          let articles = await fetchFmpNews(ticker);
+          const src = articles ? 'FMP' : 'Yahoo';
+          if (!articles) articles = await fetchYahooNews(ticker);
+          if (!articles || !articles.length) {
+            card.innerHTML = `<strong style="color:var(--accent-secondary);">${ticker}</strong> <span style="font-size:0.76rem;color:var(--text-muted);">— ไม่พบข่าวล่าสุด</span>`;
+            continue;
+          }
+          articles.forEach(a => { if (!a.relatedTickers) a.relatedTickers = a.symbol ? [a.symbol] : []; a._rel = _articleRelevance(a, ticker); });
+          articles.sort((x, y) => x._rel.score - y._rel.score);
+          // Read up to the 20 latest relevant articles (like RichieGem), let the model pick the standouts.
+          const newsText = articles.slice(0, 20).map(a => `[${a._rel.scope.toUpperCase()}] ${a.title}\n${(a.text||'').slice(0,400)}`).join('\n---\n');
+
+          // No paraphrase lecture here (this path isn't subject to Gemini's RECITATION filter,
+          // and it triggers Gemma's self-audit). Hard "final answer only" + room to finish.
+          const prompt = `คุณคือนักวิเคราะห์การลงทุนสไตล์ Meme/Guru วิเคราะห์ข่าวของหุ้น ${ticker} เป็นภาษาไทย แบบกระชับมีสีสัน
+
+ตอบเฉพาะคำตอบสุดท้ายตามรูปแบบด้านล่างเท่านั้น ห้ามแสดงขั้นตอนการคิด การร่าง หรือการตรวจสอบใดๆ ห้ามมีคำเกริ่นนำ
+
+## Sentiment: 🟢 บวก / 🔴 ลบ / 🟡 กลาง — เหตุผลสั้นๆ
+## ประเด็นเด็ด (3-5 ข้อ พร้อมรายละเอียดสั้นๆ ต่อข้อ)
+- ...
+## คำแนะนำ: ควรเข้า / ควรถือ / ควรหนี — เหตุผล 1-2 ประโยค
+
+ข่าวล่าสุด (${Math.min(articles.length,20)} ชิ้น):
+${newsText}`;
+
+          // fast:false → sonnet. Haiku's Thai is garbled/unreliable for this; sonnet is clean.
+          const analysis = _stripThinking(await callAI({ system: null, messages: [{ role: 'user', content: prompt }], maxTokens: 2048, fast: false, geminiModelPattern: /gemma/i }));
+          const meta = `<span style="font-size:0.65rem;color:var(--text-muted);">${src} · ${_lastAIModel}</span>`;
+          if (!/##/.test(analysis)) {
+            // Model didn't follow the format — show headlines instead of garbled prose.
+            const links = articles.slice(0,5).map(a => `• <a href="${a.url}" target="_blank" style="color:var(--accent);text-decoration:none;">${(a.title||'').slice(0,72)}</a>`).join('<br>');
+            card.innerHTML = `
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <strong style="color:var(--accent-secondary);">${ticker}</strong>${meta}
+              </div>
+              <p style="font-size:0.74rem;color:var(--yellow);margin:0 0 4px;">⚠️ AI ไม่ได้ตอบตามรูปแบบ — แสดงหัวข้อข่าวแทน</p>
+              <div style="font-size:0.76rem;line-height:1.7;">${links}</div>`;
+            continue;
+          }
+          card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <strong style="color:var(--accent-secondary);">${ticker}</strong>${meta}
+            </div>
+            <div style="font-size:0.78rem;line-height:1.7;">${_aiMarkdown(analysis)}</div>`;
+        } catch (err) {
+          card.innerHTML = `<strong style="color:var(--accent-secondary);">${ticker}</strong> <span style="font-size:0.76rem;color:var(--red);">— ${err.message.replace(/^GEMINI_QUOTA:/,'')}</span>`;
+        }
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = btnHtml;
     }
 
     function quickAddToWatchlist(ticker) {
